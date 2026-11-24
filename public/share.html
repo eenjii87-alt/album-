@@ -12,12 +12,12 @@
 /* VOICE: practical, calm work tool for a small team
    IDEA: a photo-lab envelope: each send is a kraft envelope with a stamped note; the files inside sit on a contact sheet with exact size marks
    PICTURE: the big send envelope (drop zone) at the top, then the envelopes, newest first
-   COLOUR+TYPE: paper white / night graphite, kraft #d8b98d, ink #1d1f23, stamp blue #2a5bd7; Manrope throughout
+   COLOUR+TYPE: warm cream / dusk plum, peach envelope #f4c99c, ink #2a1a2e, accent bubblegum #b0407a / golden #ffb45e; Manrope throughout
    LAYOUT: title, send envelope, list of envelopes with contact sheets; one column up to 1100px */
-:root{color-scheme:light dark;--bg:light-dark(#f7f6f2,#151619);--card:light-dark(#ffffff,#1e2024);--ink:light-dark(#1d1f23,#ecebe6);--mute:light-dark(#62656b,#a3a6ab);--line:light-dark(#e2dfd6,#30333a);--kraft:light-dark(#d8b98d,#6e5636);--kraftInk:light-dark(#3b2a14,#f3e6d2);--blue:light-dark(#2a5bd7,#7fa4ff);--sheet:#1b1c1f}
+:root{color-scheme:light dark;--bg:light-dark(#fbf3ec,#1d1322);--card:light-dark(#fffaf5,#2a1d30);--ink:light-dark(#2a1a2e,#fbeee0);--mute:light-dark(#6e5a6c,#c4a9b8);--line:light-dark(#ecdccf,#4a3550);--kraft:light-dark(#f4c99c,#6b3954);--kraftInk:light-dark(#4a2a14,#fbeee0);--blue:light-dark(#b0407a,#ffb45e);--sheet:#1d1322}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 'Manrope',system-ui,sans-serif;overflow-x:clip}
+body{margin:0;background:radial-gradient(55% 40% at 90% -8%,light-dark(rgba(255,190,120,.45),rgba(255,170,90,.28)),transparent 70%),radial-gradient(45% 35% at -6% 106%,light-dark(rgba(255,150,200,.3),rgba(255,110,170,.18)),transparent 70%),var(--bg);background-attachment:fixed;min-height:100vh;color:var(--ink);font:16px/1.55 'Manrope',system-ui,sans-serif;overflow-x:clip}
 [hidden]{display:none!important}
 button,input{font:inherit;color:inherit}
 svg{display:block}
@@ -30,7 +30,7 @@ h1[contenteditable]:not([contenteditable=false]):is(:hover,:focus){box-shadow:0 
 .stamp svg{width:16px;height:16px}
 .btn{font:700 16px 'Manrope',sans-serif;min-height:46px;padding:0 18px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
 .btn svg{width:19px;height:19px;flex:none}
-.btn.pri{background:var(--blue);border-color:var(--blue);color:light-dark(#fff,#0c1630)}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:light-dark(#fff,#2a1420)}
 .btn.sm{min-height:44px;padding:0 14px;font-size:15px}
 .btn.danger{color:light-dark(#b3261e,#ff9d94)}
 .btn:disabled{opacity:.5;cursor:default}
@@ -56,7 +56,7 @@ h1[contenteditable]:not([contenteditable=false]):is(:hover,:focus){box-shadow:0 
 .picked li span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
 .sendrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 .sendrow .fld{flex:1 1 260px;background:rgba(255,255,255,.55);border-color:transparent;color:#1d1f23}
-:root .sendrow .fld::placeholder{color:#6b5a43}
+:root .sendrow .fld::placeholder{color:#7a5a52}
 .bar{height:6px;background:rgba(0,0,0,.15);border-radius:3px;overflow:hidden;margin-top:12px}
 .bar i{display:block;height:100%;width:0;background:var(--blue);transition:width .3s}
 .prog{margin-top:12px;font-size:14px;font-weight:700}
@@ -87,7 +87,7 @@ h1[contenteditable]:not([contenteditable=false]):is(:hover,:focus){box-shadow:0 
 .pvbody .noprev{display:grid;place-items:center;text-align:center;color:#a3a6ab}
 .pvfoot{display:flex;justify-content:center;gap:10px;padding:12px 16px calc(16px + env(safe-area-inset-bottom))}
 .pvfoot .btn{background:#2a2b2f;border-color:#3a3b40;color:#ecebe6}
-.pvfoot .btn.pri{background:#7fa4ff;border-color:#7fa4ff;color:#0c1630}
+.pvfoot .btn.pri{background:linear-gradient(135deg,#ffc36e,#ff9a7a);border-color:transparent;color:#2a1420}
 .modal{position:fixed;inset:0;z-index:60;background:rgba(10,9,12,.6);display:grid;place-items:center;padding:16px}
 .card{width:min(460px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
 .card h3{margin:0 0 6px;font-size:22px;font-weight:800}
