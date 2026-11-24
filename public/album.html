@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="/shim.js"></script>
+<title>Гэр бүлийн цомог</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: warm family keepsake, playful but tidy
+   IDEA: a real scrapbook album on a dark desk: cloth-bound books on a shelf, black/kraft pages, photo corners, washi tape, stickers
+   PICTURE: the open book spread itself; on the shelf, the covers
+   COLOUR+TYPE: desk charcoal #18171c, ivory #f2ece0, coral #ff7a66 accent; Caveat handwriting + Nunito
+   LAYOUT: shelf of covers / year-month timeline / open spread with page bar; edit tray docked at the bottom */
+:root{color-scheme:dark;--bg:#18171c;--bg2:#24232a;--bg3:#302f37;--ink:#f2ece0;--mute:#aaa398;--line:#3d3b44;--acc:#ff7a66;--hand:'Caveat',cursive;--sans:'Nunito',system-ui,sans-serif}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg) radial-gradient(120% 50% at 50% 0,#2a2930 0,transparent 70%) no-repeat;color:var(--ink);font:16px/1.55 var(--sans);overflow-x:clip;min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+body.traying{padding-bottom:300px}
+[hidden]{display:none!important}
+button,input,textarea{font:inherit;color:inherit}
+a{color:inherit}
+svg{display:block}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:max(4vw,16px,env(safe-area-inset-left))}
+.btn{font:700 16px var(--sans);min-height:46px;padding:0 18px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg2);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;text-decoration:none}
+.btn svg{width:19px;height:19px;flex:none}
+.btn.sm{min-height:44px;padding:0 14px;font-size:15px}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#2b0f0a}
+.btn.danger{color:#ffb2a6}
+.btn:disabled{opacity:.5;cursor:default}
+.ic{all:unset;box-sizing:border-box;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--ink);background:rgba(255,255,255,.08);flex:none}
+.ic:hover{background:rgba(255,255,255,.16)}.ic:disabled{opacity:.25;cursor:default}
+.ic svg{width:22px;height:22px}
+:is(.btn,.ic,.chip,.book,.tp,.it,.stgrid button,.ntgrid button,.sw button,.ttab):focus-visible,.fld:focus-visible{outline:3px solid var(--acc);outline-offset:3px}
+.chip{flex:none;font:700 15px var(--sans);min-height:42px;padding:0 15px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip b{color:var(--mute);font-weight:600}
+.chip[aria-pressed=true],.ttab[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip[aria-pressed=true] b{color:#6d685f}
+.fld{font:16px var(--sans);min-height:44px;width:100%;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px}
+textarea.fld{padding:10px 12px;resize:vertical;min-height:70px;font:500 22px/1.2 var(--hand)}
+.status{color:var(--mute);margin:8px 0}
+.status:empty{display:none}
+.hint{color:var(--mute);font-size:14px;margin:8px 0 0}
+.fl{font-size:14px;color:var(--mute);margin:14px 0 6px}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.grow{flex:1}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding-top:clamp(20px,3vw,40px)}
+h1{font:700 clamp(40px,6vw,60px)/1.05 var(--hand);margin:0;text-wrap:balance;outline:none;border-radius:8px;padding:0 4px;margin-left:-4px}
+h1[contenteditable]:not([contenteditable=false]):is(:hover,:focus){box-shadow:0 0 0 2px var(--line)}
+.sub{margin:2px 0 0;color:var(--mute);font-size:15px}
+.tabs{display:flex;gap:8px}
+.tabs a{text-decoration:none}
+.tabs a[aria-current=page]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* shelf */
+.sect h2{font:700 30px/1.1 var(--hand);color:var(--acc);margin:30px 0 4px}
+.sect .sd{color:var(--mute);margin:0 0 20px;font-size:15px}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:30px 26px;padding:6px 4px 26px;background:linear-gradient(transparent calc(100% - 12px),#3b2d22 calc(100% - 12px),#2a2019);border-radius:0 0 4px 4px}
+.bk{display:grid;gap:8px;align-content:start}
+.book{position:relative;display:block;aspect-ratio:3/4;border-radius:3px 10px 10px 3px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.07) 0 1px,transparent 1px 3px),var(--cv);box-shadow:inset 11px 0 0 rgba(0,0,0,.2),inset 13px 0 0 rgba(255,255,255,.07),0 14px 24px rgba(0,0,0,.5);transition:transform .25s;text-decoration:none;color:#2b2a2f;cursor:pointer;overflow:hidden}
+.book:hover{transform:translateY(-4px) rotate(-1deg)}
+.book .plate{position:absolute;left:18%;right:9%;top:10%;background:#f6f0e4;border-radius:4px;padding:6px 8px;text-align:center;font:700 clamp(18px,1.8vw,22px)/1.05 var(--hand);box-shadow:0 2px 6px rgba(0,0,0,.3);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.book .win{position:absolute;left:24%;width:44%;bottom:11%;aspect-ratio:1;border:4px solid #f6f0e4;transform:rotate(3deg);box-shadow:0 4px 10px rgba(0,0,0,.35);background:#3a3940}
+.book .win img{width:100%;height:100%;object-fit:cover;display:block}
+.book .bst{position:absolute;width:32%;right:5%;bottom:5%;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+.book .lock{position:absolute;left:16%;bottom:6%;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,.55);color:#fff;font:700 12px var(--sans);padding:3px 8px;border-radius:999px}
+.book .lock svg{width:13px;height:13px}
+.book.new{all:unset;box-sizing:border-box;aspect-ratio:3/4;border:2px dashed #4d4b55;border-radius:3px 10px 10px 3px;display:grid;place-items:center;text-align:center;color:var(--mute);font:700 26px/1.1 var(--hand);cursor:pointer;padding:10px}
+.book.new:hover{border-color:var(--acc);color:var(--ink)}
+.book.new svg{width:34px;height:34px;margin:0 auto 6px}
+.bmeta{color:var(--mute);font-size:14px;margin:0}
+.empty{text-align:center;padding:30px 0 60px;color:var(--mute)}
+.empty .e1{font:700 34px/1.1 var(--hand);color:var(--ink);margin:0 0 6px}
+
+/* timeline */
+.yrs{display:flex;gap:8px;overflow-x:auto;padding:14px 2px 6px;scrollbar-width:none}
+.tly{scroll-margin-top:16px}
+.yh{font:700 46px/1 var(--hand);margin:28px 0 6px}
+.mh{font:700 28px/1.1 var(--hand);color:var(--acc);margin:18px 0 14px}
+.tlg{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:22px 18px}
+.tp{all:unset;cursor:pointer;display:grid;gap:4px}
+.tpi{display:block;aspect-ratio:1;border:5px solid #f6f0e4;background:#3a3940;box-shadow:0 8px 18px rgba(0,0,0,.45);transform:rotate(var(--r));transition:transform .25s}
+.tp:hover .tpi{transform:rotate(0)}
+.tpi img{width:100%;height:100%;object-fit:cover;display:block}
+.tpd{font:700 15px var(--sans);margin-top:6px}
+.tpa{color:var(--mute);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* album view */
+.abar{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;padding-top:14px;padding-bottom:10px}
+.abar .at{flex:1 1 220px}
+.abar h2{font:700 clamp(30px,4vw,42px)/1.05 var(--hand);margin:0;overflow-wrap:anywhere}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--mute)}
+.badge svg{width:14px;height:14px}
+.aact{display:flex;gap:8px;flex-wrap:wrap}
+.desk{--cp:clamp(9px,1.5vw,20px);padding:clamp(22px,4vw,54px) 0 6px;background:radial-gradient(90% 70% at 35% 25%,rgba(255,244,222,.38),transparent 65%),radial-gradient(60% 50% at 85% 90%,rgba(90,55,25,.18),transparent 70%),repeating-linear-gradient(91deg,rgba(110,70,35,.09) 0 2px,transparent 2px 9px,rgba(110,70,35,.05) 9px 11px,transparent 11px 26px),repeating-linear-gradient(89.3deg,rgba(255,255,255,.06) 0 1px,transparent 1px 41px),linear-gradient(90deg,#c99d70,#d6ad81 35%,#c8996b 62%,#d3a87a)}
+.cover{position:relative;width:fit-content;margin:0 auto;padding:var(--cp);border-radius:7px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.07) 0 1px,transparent 1px 3px),linear-gradient(160deg,#9a9ca0,#86888c);box-shadow:0 2px 0 #6f7175,0 34px 50px -10px rgba(70,40,12,.55),0 10px 18px rgba(70,40,12,.3)}
+.cover::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:calc(var(--cp)*1.6);transform:translateX(-50%);background:linear-gradient(90deg,transparent,rgba(0,0,0,.28),transparent);pointer-events:none}
+.cover.one::after{display:none}
+.spread{--n:2;--chrome:240px;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));width:min(100vw - 2*max(3vw,10px) - 2*var(--cp),1120px,max(280px,(100dvh - var(--chrome)) / 1.4143 * var(--n)));margin:0 auto;border-radius:2px;touch-action:pan-y;box-shadow:-2px 3px 0 #2e2e32,2px 3px 0 #2e2e32,-4px 6px 0 #18181b,4px 6px 0 #18181b,-6px 9px 0 #2b2b2f,6px 9px 0 #2b2b2f,0 14px 20px rgba(0,0,0,.35)}
+body.traying .spread{--chrome:470px}
+.pbar{display:flex;align-items:center;justify-content:center;gap:14px;padding:22px 0 26px;color:#3b2a17;font-weight:700;font-variant-numeric:tabular-nums}
+.pbar .ic{background:rgba(59,42,23,.14);color:#3b2a17}.pbar .ic:hover{background:rgba(59,42,23,.24)}
+.page{position:relative;aspect-ratio:210/297;container-type:inline-size;overflow:hidden;--pi:#f3ede2;user-select:none;-webkit-user-select:none}
+.page::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:9990}
+.page:first-child:not(:last-child)::before{background:linear-gradient(90deg,transparent 86%,rgba(0,0,0,.18) 95%,rgba(0,0,0,.5)),linear-gradient(90deg,rgba(255,255,255,.05),transparent 8%)}
+.page:last-child:not(:first-child)::before{background:linear-gradient(270deg,transparent 86%,rgba(0,0,0,.18) 95%,rgba(0,0,0,.5)),linear-gradient(270deg,rgba(255,255,255,.05),transparent 8%)}
+.bg-black{background:radial-gradient(120% 90% at 50% 40%,#25252a,#19191c)}
+.bg-kraft{background:repeating-linear-gradient(115deg,rgba(90,60,20,.06) 0 2px,transparent 2px 7px),#c9a477;--pi:#3b2a17}
+.bg-dots{background:radial-gradient(circle,#d9d3c8 18%,transparent 22%) 0 0/24px 24px,#fbfaf6;--pi:#2b2a33}
+.bg-pink{background:#f8dbe3;--pi:#4a2733}
+.bg-mint{background:#d5eee1;--pi:#1f3d2f}
+.bg-sky{background:#d9e7f7;--pi:#1f3350}
+.page.blank{background-image:none;filter:brightness(.9)}
+.pno{position:absolute;bottom:2.4cqw;left:0;right:0;text-align:center;font:700 4.4cqw var(--hand);color:var(--pi);opacity:.5;pointer-events:none}
+.edit .page.active::after{content:"";position:absolute;inset:8px;border:2px dashed rgba(255,122,102,.75);border-radius:4px;pointer-events:none;z-index:0}
+.it{position:absolute;left:calc(var(--x)*100cqw);top:calc(var(--y)*100cqw);width:calc(var(--w)*100cqw);transform:translate(-50%,-50%) rotate(var(--r));z-index:var(--z)}
+.it.ph{cursor:zoom-in}
+.edit .it{cursor:grab;touch-action:none}
+.edit .it.sel{outline:2px dashed var(--acc);outline-offset:6px}
+.ph .fr{position:relative;display:block}
+.ph img{display:block;width:100%;object-fit:cover;background:#3a3940;box-shadow:0 calc(var(--w)*1.2cqw) calc(var(--w)*3cqw) rgba(0,0,0,.35)}
+.k{display:none}
+.fr-c .k{display:block;position:absolute;width:calc(var(--w)*9cqw);height:calc(var(--w)*9cqw);background:linear-gradient(135deg,#f7f1e5,#d8cfbd)}
+.fr-c .k1{top:calc(var(--w)*-2.4cqw);left:calc(var(--w)*-2.4cqw);clip-path:polygon(0 0,100% 0,0 100%)}
+.fr-c .k2{top:calc(var(--w)*-2.4cqw);right:calc(var(--w)*-2.4cqw);clip-path:polygon(0 0,100% 0,100% 100%)}
+.fr-c .k3{bottom:calc(var(--w)*-2.4cqw);left:calc(var(--w)*-2.4cqw);clip-path:polygon(0 0,0 100%,100% 100%)}
+.fr-c .k4{bottom:calc(var(--w)*-2.4cqw);right:calc(var(--w)*-2.4cqw);clip-path:polygon(100% 0,100% 100%,0 100%)}
+.fr-p .fr{background:#fbfaf6;padding:calc(var(--w)*5cqw) calc(var(--w)*5cqw) calc(var(--w)*20cqw);box-shadow:0 calc(var(--w)*1.2cqw) calc(var(--w)*3cqw) rgba(0,0,0,.35)}
+.fr-p img,.fr-w img{box-shadow:none}
+.fr-w .fr{background:#f4f2ee;padding:calc(var(--w)*2.2cqw);box-shadow:0 calc(var(--w)*1.2cqw) calc(var(--w)*3cqw) rgba(0,0,0,.4)}
+.fr-t .fr::before{content:"";position:absolute;z-index:1;left:30%;width:40%;top:calc(var(--w)*-5cqw);height:calc(var(--w)*10cqw);background:repeating-linear-gradient(45deg,rgba(255,196,214,.92) 0 7px,rgba(255,228,236,.92) 7px 14px);transform:rotate(-3deg)}
+.pc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:500 calc(var(--w)*11cqw)/1.1 var(--hand);text-align:center;margin-top:calc(var(--w)*3cqw);color:var(--pi);overflow-wrap:anywhere}
+.pc.in{position:absolute;left:calc(var(--w)*5cqw);right:calc(var(--w)*5cqw);bottom:calc(var(--w)*3cqw);margin:0;color:#3a3633;font-size:calc(var(--w)*8.5cqw)}
+.stk svg{width:100%;height:auto;filter:drop-shadow(0 .5cqw .7cqw rgba(0,0,0,.28));pointer-events:none}
+.nt{font:500 calc(var(--w)*13cqw)/1.15 var(--hand);padding:calc(var(--w)*8cqw);white-space:pre-wrap;overflow-wrap:anywhere;text-align:center}
+.nt.yellow{background:#ffe680;color:#3a3220;box-shadow:0 1cqw 2cqw rgba(0,0,0,.25)}
+.nt.lined{background:repeating-linear-gradient(transparent 0 calc(var(--w)*14.95cqw - 1px),#b9d3ee calc(var(--w)*14.95cqw - 1px) calc(var(--w)*14.95cqw)) 0 calc(var(--w)*8cqw),#fffdf7;color:#2b2a33;box-shadow:0 1cqw 2cqw rgba(0,0,0,.25)}
+.nt.plain{color:var(--pi);padding:calc(var(--w)*2cqw)}
+.nt.tag{background:#ff8fab;color:#fff;clip-path:polygon(0 0,100% 0,95% 50%,100% 100%,0 100%,5% 50%);padding-inline:calc(var(--w)*12cqw)}
+.nt.kraft{background:#cfa874;color:#3b2a17;border-radius:calc(var(--w)*3cqw);box-shadow:0 1cqw 2cqw rgba(0,0,0,.25)}
+.hd{position:absolute;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:0;padding:0;cursor:pointer;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.hd svg{width:18px;height:18px}
+.hd.rot{right:-17px;bottom:-17px;background:var(--acc);color:#2b0f0a;cursor:nwse-resize;touch-action:none}
+.hd.del{right:-17px;top:-17px;background:#fff;color:#b3261e}
+.cb{position:absolute;left:3%;bottom:3%;width:34px;height:34px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:rgba(20,19,24,.78);color:#fff;cursor:pointer;opacity:0;transition:opacity .2s;z-index:2}
+.cb svg{width:18px;height:18px}
+.it:hover .cb,.cb:focus-visible{opacity:1}
+@media(hover:none){.cb{opacity:.85}}
+.flash{animation:flash 1.4s ease 2}
+@keyframes flash{50%{filter:brightness(1.35) drop-shadow(0 0 2cqw #ff7a66)}}
+
+.stk.ink{color:var(--pi)}.stk.ink svg{filter:none}
+.drw{color:var(--pi)}.drw svg{width:100%;height:auto;overflow:visible}
+.edit.pen .page{cursor:crosshair;touch-action:none}.edit.pen .it{pointer-events:none}
+.pen-ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:9995}
+.nt.title{font:700 calc(var(--w)*22cqw)/1 var(--hand);color:transparent;-webkit-text-stroke:calc(var(--w)*.6cqw) var(--pi);padding:calc(var(--w)*2cqw);text-transform:uppercase;letter-spacing:.03em}
+.nt.quote{color:var(--pi);padding:calc(var(--w)*2cqw);font-size:calc(var(--w)*11cqw)}
+.nt.quote::before{content:"“"}.nt.quote::after{content:"”"}
+.fr-o img{border-radius:50%}
+.fr-n img{box-shadow:0 calc(var(--w)*.6cqw) calc(var(--w)*1.5cqw) rgba(0,0,0,.3)}
+.fr-k .fr{background:#f7f6f2;padding:calc(var(--w)*5cqw) calc(var(--w)*5cqw) calc(var(--w)*4cqw);box-shadow:0 calc(var(--w)*1.2cqw) calc(var(--w)*3cqw) rgba(0,0,0,.4)}
+.fr-k img{box-shadow:none}
+.kt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:800 calc(var(--w)*10cqw)/1.02 var(--sans);color:#151515;text-transform:uppercase;margin-top:calc(var(--w)*4cqw);overflow-wrap:anywhere}
+.km{display:block;font:600 calc(var(--w)*3.6cqw)/1.3 var(--sans);color:#5c5a55;margin-top:calc(var(--w)*1.5cqw)}
+.km:empty{display:none}
+.cover.spiral::after{width:46px;background:radial-gradient(ellipse 48% 30% at 50% 50%,transparent 52%,#e6e8eb 56%,#9da1a7 70%,transparent 75%) 0 6px/100% 24px repeat-y;filter:drop-shadow(0 2px 1px rgba(0,0,0,.55));z-index:3}
+.cover.one.spiral::after{display:block;left:var(--cp)}
+.cover.spiral .page:first-child:not(:last-child)::before{background:radial-gradient(circle,#0b0b0d 38%,transparent 44%) right 6px top 6px/14px 24px repeat-y,linear-gradient(90deg,transparent 86%,rgba(0,0,0,.18) 95%,rgba(0,0,0,.5))}
+.cover.spiral .page:last-child:not(:first-child)::before{background:radial-gradient(circle,#0b0b0d 38%,transparent 44%) left 6px top 6px/14px 24px repeat-y,linear-gradient(270deg,transparent 86%,rgba(0,0,0,.18) 95%,rgba(0,0,0,.5))}
+.cover.one.spiral .page::before{background:radial-gradient(circle,#0b0b0d 38%,transparent 44%) left 6px top 6px/14px 24px repeat-y}
+.wbar{display:flex;align-items:center;gap:10px;padding-top:14px}
+.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin:12px 0 30px}
+.wt{all:unset;cursor:pointer;display:block;aspect-ratio:3/4;overflow:hidden;background:#2a2930}
+.wt img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}
+.wt:hover img{transform:scale(1.05)}
+.wt:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.popts{display:grid;gap:10px;margin-top:16px}
+.popt{all:unset;box-sizing:border-box;cursor:pointer;border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:2px}
+.popt:hover,.popt:focus-visible{border-color:var(--acc)}
+.popt b{font-size:17px}.popt span{color:var(--mute);font-size:14px}
+
+/* edit tray */
+.tray{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--bg2);border-top:1px solid var(--line);box-shadow:0 -12px 30px rgba(0,0,0,.4);padding:12px max(3vw,12px) calc(12px + env(safe-area-inset-bottom));max-height:min(46vh,340px);overflow:auto}
+.ttabs{display:flex;gap:8px;overflow-x:auto;margin:0 auto 12px;max-width:1000px;scrollbar-width:none}
+.ttab{flex:none;font:700 15px var(--sans);min-height:42px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:transparent;cursor:pointer}
+.tbody{max-width:1000px;margin:0 auto}
+.stgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:8px}
+.stgrid button{all:unset;box-sizing:border-box;aspect-ratio:1;display:grid;place-items:center;border-radius:12px;background:var(--bg3);cursor:pointer;padding:9px}
+.stgrid button[aria-pressed=true]{box-shadow:0 0 0 3px var(--acc)}
+.stgrid svg{width:100%;height:auto;max-height:100%}
+.stgrid.sm{grid-template-columns:repeat(auto-fill,minmax(50px,1fr))}
+.ntgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ntgrid button{all:unset;box-sizing:border-box;cursor:pointer;border-radius:10px;padding:10px;background:var(--bg3);display:grid;place-items:center;min-height:70px}
+.ntgrid .nt{font-size:22px;padding:6px 14px;--w:.3}
+.ntgrid .nt.plain,.ntgrid .nt.quote{color:var(--ink)}
+.ntgrid .nt.title{font-size:26px;-webkit-text-stroke:1px var(--ink);letter-spacing:.03em}
+.stsec{font-size:14px;color:var(--mute);margin:0 0 8px}
+.stgrid .ink{color:var(--ink)}
+.sw{display:flex;flex-wrap:wrap;gap:10px}
+.sw button{width:44px;height:44px;border-radius:50%;border:3px solid transparent;background:var(--c);cursor:pointer;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
+.sw button[aria-pressed=true]{border-color:#fff}
+.sw .bgsw{border-radius:6px;width:44px;height:60px;background-size:12px 12px}
+.tsel{display:grid;gap:12px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.tl{display:grid;gap:4px;font-size:14px;color:var(--mute)}
+
+/* lightbox */
+.viewer{position:fixed;inset:0;z-index:40;background:rgba(14,13,17,.97);display:grid;grid-template-rows:auto minmax(0,1fr) auto}
+.vtop{display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) max(3vw,12px) 4px}
+.vcount{color:var(--mute);font-variant-numeric:tabular-nums}
+.stage{position:relative;min-height:0}
+.track{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.track::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;position:relative;scroll-snap-align:center;scroll-snap-stop:always}
+.slide img{position:absolute;top:8px;left:4vw;width:calc(100% - 8vw);height:calc(100% - 16px);object-fit:contain}
+.nav{position:absolute;top:50%;transform:translateY(-50%)}.prev{left:12px}.next{right:12px}
+@media(hover:none){.nav{display:none}}
+.vinfo{width:min(760px,100%);margin:0 auto;padding:10px 16px calc(16px + env(safe-area-inset-bottom));text-align:center}
+.vcap{font:500 28px/1.2 var(--hand);margin:0;overflow-wrap:anywhere}
+.vcap:empty{display:none}
+.vmeta{color:var(--mute);margin:4px 0 0;font-size:15px}
+.acts{display:flex;justify-content:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+
+/* modals, busy, toast */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(10,9,12,.72);display:grid;place-items:center;padding:16px;overflow:auto}
+.card{width:min(520px,100%);background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.card h3{font:700 32px/1.1 var(--hand);margin:0 0 6px}
+.card p{margin:0;color:var(--mute)}
+.card label.tl{margin-top:12px}
+.row{display:flex;gap:10px;align-items:center;margin-top:20px;flex-wrap:wrap}
+.pv{display:flex;gap:8px;flex-wrap:wrap}
+.pv label{flex:1 1 180px;display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer}
+.pv label:has(input:checked){border-color:var(--acc);background:rgba(255,122,102,.08)}
+.pv input{accent-color:var(--acc);width:18px;height:18px}
+.pv b{display:block}.pv small{color:var(--mute)}
+#confirm{z-index:65}
+.busy{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:70;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px 16px;min-width:min(320px,calc(100vw - 32px));box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+.veil{position:fixed;inset:12px;z-index:70;border:3px dashed var(--acc);border-radius:24px;background:rgba(24,23,28,.88);display:grid;place-items:center;font:700 clamp(32px,5vw,48px) var(--hand);color:var(--acc);pointer-events:none}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:700;z-index:80;max-width:calc(100vw - 32px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+body.traying .toast{bottom:auto;top:76px}
+.foot{color:var(--mute);font-size:14px;text-align:center;padding:30px 16px}
+@media(max-width:600px){.wall{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.shelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 18px}.tlg{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 10px}.tpa{display:none}.tpd{font-size:13px}.abar .aact{width:100%}.abar .aact .btn{flex:1}.yh{font-size:38px}}
+@media(prefers-reduced-motion:reduce){.book,.tpi,.cb,.bar i{transition:none}.flash{animation:none}}
+</style>
+</head>
+<body>
+<svg id="defs" width="0" height="0" style="position:absolute" aria-hidden="true"></svg>
+
+<header id="top" class="wrap top">
+  <div>
+    <h1 id="title">Манай гэр бүлийн цомог</h1>
+    <p id="sub" class="sub"></p>
+  </div>
+  <nav class="tabs" aria-label="Харах хэлбэр">
+    <a href="#" id="tabShelf" class="chip">Цомгууд</a>
+    <a href="#timeline" id="tabTl" class="chip">Он сараар</a>
+    <a href="#wall" id="tabWall" class="chip">Хана</a>
+  </nav>
+</header>
+
+<main>
+  <section id="vShelf" class="wrap">
+    <p id="shStatus" class="status" role="status">Цомгийг нээж байна…</p>
+    <div id="shelf"></div>
+  </section>
+
+  <section id="vTl" class="wrap" hidden>
+    <p id="tlStatus" class="status" role="status"></p>
+    <nav id="tlYears" class="yrs" aria-label="Он"></nav>
+    <div id="tlBody"></div>
+  </section>
+
+  <section id="vWall" class="wrap" hidden>
+    <div class="wbar"><p id="wStatus" class="status" role="status"></p><span class="grow"></span><button id="wShuf" class="chip" data-i="grid">Холих</button></div>
+    <div id="wall" class="wall"></div>
+  </section>
+
+  <section id="vAlb" hidden>
+    <div class="wrap abar">
+      <a href="#" class="ic" aria-label="Тавиур руу буцах" data-i="back"></a>
+      <div class="at"><h2 id="aTitle"></h2><span id="aBadge" class="badge"></span></div>
+      <div class="aact">
+        <button id="aPrint" class="btn sm" data-i="print" hidden>Хэвлэх</button>
+        <button id="aSet" class="btn sm" data-i="gear" hidden>Тохиргоо</button>
+        <button id="aEdit" class="btn sm pri" hidden></button>
+      </div>
+    </div>
+    <p id="aStatus" class="status wrap" role="status"></p>
+    <div id="aEmpty" class="empty wrap" hidden><p class="e1">Энэ цомог хоосон байна</p><p id="aEmptyMsg">Удахгүй хуудас нэмэгдэнэ.</p></div>
+    <div id="desk" class="desk">
+      <div id="cover" class="cover"><div id="spread" class="spread"></div></div>
+      <div class="pbar"><button id="pprev" class="ic" aria-label="Өмнөх хуудас" data-i="back"></button><span id="pcount"></span><button id="pnext" class="ic" aria-label="Дараах хуудас" data-i="next"></button></div>
+    </div>
+  </section>
+</main>
+<footer id="foot" class="foot">Хуваалцсан цомгуудыг зөвхөн таны зөвшөөрсөн имэйлтэй хүмүүс харна. «Зөвхөн би» цомгийг хэн ч харахгүй.</footer>
+
+<div id="tray" class="tray" hidden>
+  <div id="ttabs" class="ttabs" role="tablist">
+    <button class="ttab" data-tab="photo" role="tab">Зураг</button>
+    <button class="ttab" data-tab="sticker" role="tab">Стикер</button>
+    <button class="ttab" data-tab="pen" role="tab">Зурах</button>
+    <button class="ttab" data-tab="note" role="tab">Бичиг</button>
+    <button class="ttab" data-tab="page" role="tab">Хуудас</button>
+  </div>
+  <div id="tbody" class="tbody"></div>
+</div>
+<input id="file" type="file" accept="image/*,.heic,.heif" multiple hidden>
+
+<div id="lb" class="viewer" hidden role="dialog" aria-modal="true" aria-label="Зураг үзэх">
+  <div class="vtop"><span id="lbCount" class="vcount"></span><button id="lbClose" class="ic" aria-label="Хаах" data-i="x"></button></div>
+  <div class="stage">
+    <div id="lbTrack" class="track"></div>
+    <button id="lbPrev" class="ic nav prev" aria-label="Өмнөх зураг" data-i="back"></button>
+    <button id="lbNext" class="ic nav next" aria-label="Дараах зураг" data-i="next"></button>
+  </div>
+  <div class="vinfo">
+    <p id="lbCap" class="vcap"></p><p id="lbMeta" class="vmeta"></p>
+    <div class="acts">
+      <button id="lbGo" class="btn sm" data-i="book">Цомогт нь харах</button>
+      <button id="lbCmt" class="btn sm" data-i="cmt">Сэтгэгдэл бичих</button>
+      <button id="lbDl" class="btn sm" data-i="dl">Татах</button>
+    </div>
+  </div>
+</div>
+
+<div id="mAlb" class="modal" hidden>
+  <form id="fAlb" class="card" role="dialog" aria-modal="true" aria-labelledby="fAlbH">
+    <h3 id="fAlbH">Шинэ цомог</h3>
+    <label class="tl">Цомгийн нэр<input id="fTitle" class="fld" maxlength="60" placeholder="Жишээ нь: Зуны аялал 2026"></label>
+    <div class="fl">Хавтасны өнгө</div><div id="fColors" class="sw"></div>
+    <div class="fl">Хавтасны стикер</div><div id="fStk" class="stgrid sm"></div>
+    <div class="fl">Хэн харах вэ?</div>
+    <div class="pv">
+      <label><input type="radio" name="priv" value="0"><span><b>Гэр бүл харна</b><small>Линктэй хүмүүс харна</small></span></label>
+      <label><input type="radio" name="priv" value="1"><span><b>Зөвхөн би</b><small>Өөр хэн ч харахгүй</small></span></label>
+    </div>
+    <div class="fl">Хавтасны хэлбэр</div>
+    <div class="pv">
+      <label><input type="radio" name="bind" value="book"><span><b>Хавтастай ном</b><small>Зузаан даавуун хавтас</small></span></label>
+      <label><input type="radio" name="bind" value="spiral"><span><b>Спираль дэвтэр</b><small>Төмөр цагирагтай скрапбук</small></span></label>
+    </div>
+    <div class="row"><button type="button" id="fDel" class="btn sm danger" data-i="trash" hidden>Цомог устгах</button><span class="grow"></span><button type="button" id="fCancel" class="btn sm">Болих</button><button type="submit" class="btn sm pri">Хадгалах</button></div>
+  </form>
+</div>
+
+<div id="mPrint" class="modal" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="mpH">
+    <h3 id="mpH">Юуг хэвлэх вэ?</h3>
+    <p>PDF файл гарна. Түүнийгээ нээгээд хэвлэх товчийг дарахад болно.</p>
+    <div class="popts">
+      <button id="prPages" class="popt"><b>Цомгийн хуудсууд</b><span>Хуудас бүр A4 хэмжээтэй, хавтастайгаа</span></button>
+      <button id="prCards" class="popt"><b>Постер картууд</b><span>Зураг бүр нэг карт болно. A4 хуудсанд 4 карт, хайчлах зураастай</span></button>
+    </div>
+    <div class="row"><span class="grow"></span><button id="prCancel" class="btn sm">Болих</button></div>
+  </div>
+</div>
+
+<div id="confirm" class="modal" hidden>
+  <div class="card" role="alertdialog" aria-modal="true" aria-labelledby="cH">
+    <h3 id="cH"></h3><p id="cD"></p>
+    <div class="row"><span class="grow"></span><button id="cNo" class="btn sm">Болих</button><button id="cYes" class="btn sm pri"></button></div>
+  </div>
+</div>
+
+<div id="busy" class="busy" hidden role="status"><span id="busyT"></span><div class="bar"><i id="busyB"></i></div></div>
+<div id="veil" class="veil" hidden>Зургаа энд тавиарай</div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+{
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const has = (o, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
+const rid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-5);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const num = (v, d, a, b) => { v = +v; return Number.isFinite(v) ? clamp(v, a, b) : d; };
+const pad = n => String(n).padStart(2, '0');
+const ymd = ms => { const d = new Date(ms || Date.now()); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+const fmtDate = s => isDate(s) ? s.replace(/-/g, '.') : '';
+const okAsset = a => typeof a === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(a);
+const okId = s => typeof s === 'string' && /^[a-z0-9]{4,30}$/i.test(s);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const PH = 297 / 210;
+const DEF_TITLE = 'Манай гэр бүлийн цомог';
+
+const ICONS = {
+  x: 'M6 6l12 12M18 6L6 18', plus: 'M12 5v14M5 12h14', back: 'M15 5l-7 7 7 7', next: 'M9 5l7 7-7 7',
+  rot: '<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>', cmt: '<path d="M4 5h16v11H10l-6 4z"/>',
+  dl: 'M12 4v11m-5-5l5 5 5-5M5 20h14', trash: 'M4 7h16M9 7V4h6v3m-8 0l1 13h8l1-13',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.6 2.7-6 6-6s6 2.4 6 6"/><path d="M16 4.6a3.2 3.2 0 0 1 0 6.3M18 14.3c1.8.8 3 2.8 3 5.7"/>',
+  gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  print: '<path d="M7 9V3h10v6M7 17H4v-7h16v7h-3"/><path d="M7 14h10v7H7z"/>', pen: 'M4 20l4-1 11-11-3-3L5 16zM14 6l3 3',
+  check: 'M5 12l5 5 9-10', grid: '<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>', up: 'M12 19V5m-6 6 6-6 6 6', down: 'M12 5v14m-6-6 6 6 6-6',
+  book: '<path d="M4 5c3-1.5 5.5-1.5 8 0v14c-2.5-1.5-5-1.5-8 0zM12 5c2.5-1.5 5-1.5 8 0v14c-3-1.5-5.5-1.5-8 0"/>'
+};
+const I = n => { const d = ICONS[n] || ''; return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d.startsWith('<') ? d : `<path d="${d}"/>`}</svg>`; };
+
+/* Stickers: [label, viewBox, height/width, svg] — original drawings */
+const TAPE = (fill, extra) => `<polygon points="2,0 118,0 120,4 117,8 120,12 117,16 120,20 117,24 120,30 2,30 0,26 3,22 0,18 3,14 0,10 3,6 0,2" fill="${fill}" opacity=".9"/>${extra}`;
+const ST = {
+  heart: ['Зүрх', '0 0 100 100', 1, '<path d="M50 86C20 66 8 48 12 31c4-16 24-22 38-6 14-16 34-10 38 6 4 17-8 35-38 55z" fill="#ff6b81" stroke="#7a2236" stroke-width="3" stroke-linejoin="round"/><path d="M27 33c3-6 9-8 14-6" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".7"/>'],
+  star: ['Од', '0 0 100 100', 1, '<polygon points="50,10 60.6,37.4 89.9,39 67.1,57.6 74.7,86 50,70 25.3,86 32.9,57.6 10.1,39 39.4,37.4" fill="#ffd166" stroke="#a06a00" stroke-width="3" stroke-linejoin="round"/><circle cx="42" cy="52" r="3" fill="#5a3b00"/><circle cx="58" cy="52" r="3" fill="#5a3b00"/><path d="M45 59q5 4 10 0" stroke="#5a3b00" stroke-width="2.5" fill="none" stroke-linecap="round"/>'],
+  flower: ['Цэцэг', '0 0 100 100', 1, '<g fill="#ff9ec4" stroke="#b0476f" stroke-width="2.5"><circle cx="50" cy="27" r="17"/><circle cx="72" cy="43" r="17"/><circle cx="64" cy="69" r="17"/><circle cx="36" cy="69" r="17"/><circle cx="28" cy="43" r="17"/></g><circle cx="50" cy="50" r="13" fill="#ffd166" stroke="#b07a00" stroke-width="2.5"/>'],
+  sun: ['Нар', '0 0 100 100', 1, '<path d="M50 5v13M50 82v13M5 50h13M82 50h13M18 18l9 9M73 73l9 9M82 18l-9 9M27 73l-9 9" stroke="#f59f00" stroke-width="6" stroke-linecap="round"/><circle cx="50" cy="50" r="24" fill="#ffd43b" stroke="#e67700" stroke-width="3"/><circle cx="42" cy="47" r="3" fill="#7a4100"/><circle cx="58" cy="47" r="3" fill="#7a4100"/><path d="M42 56q8 7 16 0" stroke="#7a4100" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="35" cy="56" r="4" fill="#ff8787" opacity=".6"/><circle cx="65" cy="56" r="4" fill="#ff8787" opacity=".6"/>'],
+  cloud: ['Үүл', '0 0 100 100', 1, '<path d="M24 76h52a17 17 0 0 0 3-33.8A23 23 0 0 0 35 37 18 18 0 0 0 24 76z" fill="#f4f8ff" stroke="#6f8fc4" stroke-width="3" stroke-linejoin="round"/><circle cx="44" cy="58" r="2.6" fill="#3d4f73"/><circle cx="60" cy="58" r="2.6" fill="#3d4f73"/><path d="M48 64q4 3 8 0" stroke="#3d4f73" stroke-width="2.4" fill="none" stroke-linecap="round"/>'],
+  rainbow: ['Солонго', '0 0 100 100', 1, '<g fill="none" stroke-width="8" stroke-linecap="round"><path d="M12 72a38 38 0 0 1 76 0" stroke="#ff6b6b"/><path d="M20 72a30 30 0 0 1 60 0" stroke="#ffa94d"/><path d="M28 72a22 22 0 0 1 44 0" stroke="#ffd43b"/><path d="M36 72a14 14 0 0 1 28 0" stroke="#69db7c"/></g><g fill="#fff" stroke="#9aa9c4" stroke-width="2"><path d="M3 82a7 7 0 0 1 10-9 8 8 0 0 1 14 3 6 6 0 0 1 0 12H8a6 6 0 0 1-5-6z"/><path d="M71 82a7 7 0 0 1 10-9 8 8 0 0 1 14 3 6 6 0 0 1 0 12H76a6 6 0 0 1-5-6z"/></g>'],
+  ger: ['Гэр', '0 0 100 100', 1, '<path d="M10 60Q50 20 90 60z" fill="#fff" stroke="#4b4b55" stroke-width="3" stroke-linejoin="round"/><path d="M22 55Q50 35 78 55" stroke="#3b6fd4" stroke-width="3" fill="none"/><rect x="14" y="60" width="72" height="28" fill="#fff" stroke="#4b4b55" stroke-width="3"/><rect x="15.5" y="64" width="69" height="5" fill="#3b6fd4"/><rect x="42" y="68" width="16" height="20" fill="#e8590c" stroke="#4b4b55" stroke-width="2.5"/><circle cx="50" cy="40" r="4" fill="#ffd43b" stroke="#4b4b55" stroke-width="2"/>'],
+  cat: ['Муур', '0 0 100 100', 1, '<path d="M22 42 26 12 46 30zM78 42 74 12 54 30z" fill="#ffd8a8" stroke="#7a4b1d" stroke-width="3" stroke-linejoin="round"/><ellipse cx="50" cy="56" rx="34" ry="30" fill="#ffd8a8" stroke="#7a4b1d" stroke-width="3"/><circle cx="38" cy="52" r="4" fill="#3b2412"/><circle cx="62" cy="52" r="4" fill="#3b2412"/><path d="M46 62h8l-4 4z" fill="#ff8fab"/><path d="M50 66q-4 6-9 3M50 66q4 6 9 3M30 63H14M30 68l-14 4M70 63h16M70 68l14 4" stroke="#7a4b1d" stroke-width="2.2" fill="none" stroke-linecap="round"/>'],
+  butterfly: ['Эрвээхэй', '0 0 100 100', 1, '<g stroke="#5f3dc4" stroke-width="2.5"><ellipse cx="32" cy="36" rx="20" ry="17" fill="#b197fc" transform="rotate(-25 32 36)"/><ellipse cx="68" cy="36" rx="20" ry="17" fill="#b197fc" transform="rotate(25 68 36)"/><ellipse cx="34" cy="66" rx="14" ry="12" fill="#74c0fc" transform="rotate(20 34 66)"/><ellipse cx="66" cy="66" rx="14" ry="12" fill="#74c0fc" transform="rotate(-20 66 66)"/></g><rect x="46" y="28" width="8" height="48" rx="4" fill="#4a3b6b"/><path d="M48 28q-6-12-12-14M52 28q6-12 12-14" stroke="#4a3b6b" stroke-width="2.5" fill="none" stroke-linecap="round"/>'],
+  balloon: ['Бөмбөлөг', '0 0 100 100', 1, '<path d="M50 72q-5 10 2 25" stroke="#666" stroke-width="2" fill="none"/><ellipse cx="50" cy="38" rx="26" ry="31" fill="#ff6b6b" stroke="#a61e1e" stroke-width="3"/><path d="M45 68h10l-5 6z" fill="#a61e1e"/><ellipse cx="40" cy="26" rx="6" ry="10" fill="#fff" opacity=".45" transform="rotate(25 40 26)"/>'],
+  cake: ['Бялуу', '0 0 100 100', 1, '<rect x="18" y="52" width="64" height="34" rx="6" fill="#ffc9de" stroke="#a8436d" stroke-width="3"/><path d="M19 62q8 8 16 0t16 0 16 0 14 0" stroke="#fff" stroke-width="5" fill="none"/><rect x="47" y="30" width="6" height="22" fill="#74c0fc" stroke="#1c5d99" stroke-width="2"/><path d="M50 14q7 8 0 14q-7-6 0-14z" fill="#ffa94d" stroke="#d9480f" stroke-width="2"/><g fill="#ff6b6b"><circle cx="30" cy="76" r="3"/><circle cx="50" cy="78" r="3"/><circle cx="70" cy="76" r="3"/></g>'],
+  camera: ['Камер', '0 0 100 100', 1, '<rect x="30" y="22" width="22" height="12" rx="3" fill="#24317a"/><rect x="12" y="32" width="76" height="50" rx="9" fill="#5c7cfa" stroke="#24317a" stroke-width="3"/><circle cx="50" cy="57" r="17" fill="#e7ecff" stroke="#24317a" stroke-width="3"/><circle cx="50" cy="57" r="9" fill="#24317a"/><circle cx="46" cy="53" r="3" fill="#fff"/><rect x="70" y="38" width="10" height="6" rx="2" fill="#ffd43b"/>'],
+  plane: ['Онгоц', '0 0 100 100', 1, '<path d="M6 48 94 14 66 86 48 60z" fill="#fff" stroke="#3b5bdb" stroke-width="3" stroke-linejoin="round"/><path d="M94 14 48 60 44 82 58 68" fill="#dbe4ff" stroke="#3b5bdb" stroke-width="3" stroke-linejoin="round"/><path d="M4 72q14-4 22 4" stroke="#3b5bdb" stroke-width="2.5" fill="none" stroke-dasharray="4 5" stroke-linecap="round"/>'],
+  leaf: ['Навч', '0 0 100 100', 1, '<path d="M18 82C14 42 44 16 86 14c2 42-24 72-68 68z" fill="#8ce99a" stroke="#2b8a3e" stroke-width="3" stroke-linejoin="round"/><path d="M18 82 70 30M36 64l-2-16M50 50l14 2M42 58l16 3" stroke="#2b8a3e" stroke-width="2.5" fill="none" stroke-linecap="round"/>'],
+  sparkle: ['Гялбаа', '0 0 100 100', 1, '<path d="M50 6c4 26 18 40 44 44-26 4-40 18-44 44-4-26-18-40-44-44 26-4 40-18 44-44z" fill="#fff3bf" stroke="#f59f00" stroke-width="3" stroke-linejoin="round"/>'],
+  snow: ['Цасан ширхэг', '0 0 100 100', 1, '<g stroke="#a5d8ff" stroke-width="6" stroke-linecap="round" fill="none"><path d="M50 8v84M14 29l72 42M14 71l72-42"/></g><g stroke="#d0ebff" stroke-width="4" stroke-linecap="round" fill="none"><path d="M40 16l10 10 10-10M40 84l10-10 10 10"/></g>'],
+  clip: ['Хавчаар', '0 0 100 100', 1, '<path d="M38 88V26a12 12 0 0 1 24 0v52a7 7 0 0 1-14 0V30" fill="none" stroke="#adb5bd" stroke-width="6" stroke-linecap="round"/>'],
+  tapePink: ['Тууз, ягаан', '0 0 120 30', .25, TAPE('#ffc9de', '<g stroke="#fff" stroke-width="4" opacity=".6"><path d="M18 2 8 28M38 2 28 28M58 2 48 28M78 2 68 28M98 2 88 28M116 4 108 28"/></g>')],
+  tapeMint: ['Тууз, ногоон', '0 0 120 30', .25, TAPE('#b2f2bb', '<g fill="#fff" opacity=".75"><circle cx="12" cy="10" r="3"/><circle cx="28" cy="20" r="3"/><circle cx="44" cy="10" r="3"/><circle cx="60" cy="20" r="3"/><circle cx="76" cy="10" r="3"/><circle cx="92" cy="20" r="3"/><circle cx="108" cy="10" r="3"/></g>')],
+  tapeYellow: ['Тууз, шар', '0 0 120 30', .25, TAPE('#ffec99', '<g stroke="#f08c00" stroke-width="1.2" opacity=".45"><path d="M0 10h120M0 20h120M20 0v30M40 0v30M60 0v30M80 0v30M100 0v30"/></g>')]
+};
+const DOODLE = (l, vb, ar, b) => [l, vb, ar, `<g fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">${b}</g>`, 1];
+Object.assign(ST, {
+  dArrow: DOODLE('Сум', '0 0 100 100', 1, '<path d="M12 74C28 36 56 22 86 30"/><path d="M70 18l17 12-15 13"/>'),
+  dLoop: DOODLE('Эргэлттэй сум', '0 0 120 80', .667, '<path d="M6 60C30 66 44 50 38 36 32 22 14 28 20 44c8 20 50 22 84-18"/><path d="M88 24l16 2-4 16"/>'),
+  dHeart: DOODLE('Зүрх зураас', '0 0 100 100', 1, '<path d="M50 84C24 66 12 50 16 35c4-14 22-18 34-3 12-15 30-11 34 3 4 15-8 31-34 49z"/>'),
+  dHearts: DOODLE('Жижиг зүрхнүүд', '0 0 100 100', 1, '<path d="M30 46C18 38 12 30 14 23c2-6 11-8 16-1 5-7 14-5 16 1 2 7-4 15-16 23z"/><path d="M70 80C58 72 52 64 54 57c2-6 11-8 16-1 5-7 14-5 16 1 2 7-4 15-16 23z"/><path d="M74 36c-6-4-9-8-8-11 1-3 5-4 8-1 3-3 7-2 8 1 1 3-2 7-8 11z"/>'),
+  dStar: DOODLE('Од зураас', '0 0 100 100', 1, '<path d="M50 12l10 26 28 2-22 17 8 27-24-16-24 16 8-27-22-17 28-2z"/>'),
+  dSpark: DOODLE('Гялтгар', '0 0 100 100', 1, '<path d="M32 14v30M17 29h30M70 46v34M53 63h34M30 70v14M23 77h14"/>'),
+  dSwirl: DOODLE('Долгион зураас', '0 0 200 40', .2, '<path d="M6 26c30-16 48 12 78 0s42-18 70-2 28 6 40-4"/>'),
+  dQuote: DOODLE('Хашилт', '0 0 100 100', 1, '<path fill="currentColor" stroke="none" d="M18 64q0-26 24-38l4 6q-13 9-13 20 11 0 11 11t-12 11q-14 0-14-10zM56 64q0-26 24-38l4 6q-13 9-13 20 11 0 11 11t-12 11q-14 0-14-10z"/>'),
+  dPlane: DOODLE('Нислэгийн зам', '0 0 120 80', .667, '<path d="M6 70c24-6 30-34 56-34s28 20 40 2" stroke-dasharray="5 8"/><path fill="currentColor" stroke="none" d="M100 30l16-10-6 18-4-5z"/>'),
+  dCircle: DOODLE('Тойруулах зураас', '0 0 120 80', .667, '<path d="M92 18C70 4 24 8 12 30s14 42 52 40 50-18 44-36c-3-8-12-14-22-16"/>'),
+  dFlower: DOODLE('Цэцэг зураас', '0 0 100 100', 1, '<circle cx="50" cy="40" r="8"/><path d="M50 32c-8-18 10-22 8-6M58 40c18-6 22 10 6 8M54 48c10 16-6 22-6 6M44 46c-16 8-22-8-6-8M44 34c-14-12 0-22 4-4"/><path d="M50 48v40M50 72c-10-10-20-6-22 0 10 4 18 4 22 0z"/>'),
+  dCrown: DOODLE('Титэм', '0 0 100 100', 1, '<path d="M18 70l-4-40 20 18 16-26 16 26 20-18-4 40z"/><path d="M20 82h60"/>'),
+  dSun: DOODLE('Нар зураас', '0 0 100 100', 1, '<circle cx="50" cy="50" r="16"/><path d="M50 14v12M50 74v12M14 50h12M74 50h12M24 24l8 8M68 68l8 8M76 24l-8 8M32 68l-8 8"/>')
+});
+$('defs').innerHTML = '<defs>' + Object.entries(ST).map(([k, s]) => `<symbol id="s-${k}" viewBox="${s[1]}">${s[3]}</symbol>`).join('') + '</defs>';
+const stSvg = k => { k = has(ST, k) ? k : 'heart'; return `<svg viewBox="${ST[k][1]}" aria-hidden="true"><use href="#s-${k}"/></svg>`; };
+
+const BG = { black: ['Хар', '#1f1f22', '#f3ede2'], kraft: ['Крафт', '#c9a477', '#3b2a17'], dots: ['Цэгтэй', '#fbfaf6', '#2b2a33'], pink: ['Ягаан', '#f8dbe3', '#4a2733'], mint: ['Ногоон', '#d5eee1', '#1f3d2f'], sky: ['Цэнхэр', '#d9e7f7', '#1f3350'] };
+const COV = ['#8a8c90', '#b0405c', '#3e6b4f', '#33558a', '#c98f22', '#6d4a8c', '#4a8fbf', '#e0664f', '#2c2b31'];
+const NT = { title: 'Том гарчиг', plain: 'Гар бичиг', quote: 'Ишлэл', yellow: 'Шар цаас', lined: 'Дэвтрийн хуудас', tag: 'Тууз', kraft: 'Шошго' };
+const PEN = [['ink', 'Хуудсанд тохирсон'], ['#ffffff', 'Цагаан'], ['#1d1d20', 'Хар'], ['#ff7a66', 'Шүрэн'], ['#f2c14e', 'Алтан шар'], ['#ff8fab', 'Ягаан'], ['#6aa8ff', 'Цэнхэр']];
+const PENW = [[.003, 'Нарийн'], [.006, 'Дунд'], [.012, 'Бүдүүн']];
+const penOk = c => PEN.some(p => p[0] === c);
+const dispAr = it => it.fr === 'o' || it.fr === 'k' ? 1 : (it.cr || it.ar);
+const FR = { w: 'Цагаан хүрээ', c: 'Булан', p: 'Полароид', k: 'Постер карт', o: 'Дугуй', n: 'Хүрээгүй', t: 'Тууз' };
+const LABELS = ['Хайртай', 'Гэр бүл', 'Дурсамж', 'Аз жаргал', 'Хамгийн дуртай', 'Төрсөн өдрийн мэнд!', 'Хамтдаа'];
+const CELLS = [[.27, .27], [.73, .27], [.27, .71], [.73, .71], [.27, 1.15], [.73, 1.15]], PER = 6;
+const cellW = ar => Math.round(Math.min(.43, .37 / ar) * 1000) / 1000;
+const ERR = { too_large: 'Зураг хэт том байна.', unsupported_type: 'Энэ төрлийн файлыг хадгалах боломжгүй, JPG эсвэл PNG зураг оруулна уу.', quota_or_state: 'Хадгалах зай дүүрсэн байна.', quota_exceeded: 'Хадгалах зай дүүрсэн байна.', rate_limited: 'Хэт олон удаа илгээлээ, хэсэг хүлээгээд дахин оролдоорой.' };
+
+const el = {};
+for (const id of ['tabWall','vWall','wStatus','wShuf','wall','mPrint','prPages','prCards','prCancel','top','title','sub','tabShelf','tabTl','vShelf','shStatus','shelf','vTl','tlStatus','tlYears','tlBody','vAlb','aTitle','aBadge','aPrint','aSet','aEdit','aStatus','desk','cover','spread','aEmpty','aEmptyMsg','pprev','pnext','pcount','tray','ttabs','tbody','file','lb','lbCount','lbClose','lbTrack','lbPrev','lbNext','lbCap','lbMeta','lbGo','lbCmt','lbDl','mAlb','fAlb','fAlbH','fTitle','fColors','fStk','fDel','fCancel','confirm','cH','cD','cNo','cYes','busy','busyT','busyB','veil','toast']) el[id] = $(id);
+for (const n of document.querySelectorAll('[data-i]')) n.insertAdjacentHTML('afterbegin', I(n.dataset.i));
+
+let db = null, assets = null, dl = null, cm = null, user = null, canEdit = false, uid = '';
+let siteTitle = '', shared = [], priv = [], sharedOk = false, privOk = false;
+let view = 'shelf', wantAlb = '', justMade = '', album = null, pages = [], pagesOk = false, unsubPages = null;
+let pg = 0, editMode = false, selId = null, activePage = 0, tab = 'photo', wantPage = null;
+let pen = { c: 'ink', w: .006 }, stroke = null;
+let drag = null, pendingRender = false, swipe = null, swiped = false, upBusy = false, askDone = null;
+let lb = { open: false, list: [], cur: 0, ctx: 'album', ids: '' }, tlList = [], tlSeq = 0, tlDone = false;
+
+const toast = m => { el.toast.textContent = m; el.toast.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.toast.hidden = true; }, 3800); };
+const busyShow = (t, f) => { el.busy.hidden = false; el.busyT.textContent = t; el.busyB.style.width = `${Math.round((f || 0) * 100)}%`; };
+const busyHide = () => { el.busy.hidden = true; };
+async function retry(fn) {
+  try { return await fn(); }
+  catch (e) { if (e && (e.code === 'store_unavailable' || e.code === 'unavailable')) { await wait(600 + Math.random() * 700); return fn(); } throw e; }
+}
+function ask(title, text, yes) {
+  return new Promise(res => {
+    el.cH.textContent = title; el.cD.textContent = text; el.cYes.textContent = yes;
+    el.confirm.hidden = false; el.cNo.focus();
+    askDone = v => { el.confirm.hidden = true; askDone = null; res(v); };
+  });
+}
+el.cYes.addEventListener('click', () => askDone && askDone(true));
+el.cNo.addEventListener('click', () => askDone && askDone(false));
+el.confirm.addEventListener('click', e => { if (e.target === el.confirm && askDone) askDone(false); });
+
+/* ---------- data shapes ---------- */
+const albumDoc = a => a.priv ? db.doc(`data/users/${uid}/${a.id}`) : db.doc(`albums/${a.id}`);
+const pagesCol = a => albumDoc(a).collection('pages');
+const allAlbums = () => [...shared, ...priv];
+function cleanAlb(id, d, isPriv) {
+  if (!okId(id)) return null; d = d || {};
+  return { id, priv: isPriv, bind: d.bind === 'spiral' ? 'spiral' : 'book', title: String(d.title || 'Нэргүй цомог').slice(0, 60), color: COV.includes(d.color) ? d.color : COV[0], sticker: has(ST, d.sticker) ? d.sticker : 'heart', created: +d.created || 0, np: Math.max(0, d.np | 0), nph: Math.max(0, d.nph | 0), cover: okAsset(d.cover) ? d.cover : '' };
+}
+const albData = a => Object.assign({ bind: a.bind || 'book', title: a.title, color: a.color, sticker: a.sticker, created: a.created, np: a.np, nph: a.nph, cover: a.cover }, a.priv ? { kind: 'album' } : {});
+function cleanItem(i) {
+  if (!i || typeof i !== 'object') return null;
+  const it = { id: String(i.id || '').replace(/[^a-z0-9]/gi, '').slice(0, 24) || rid(), t: i.t, x: num(i.x, .5, -.2, 1.2), y: num(i.y, .7, -.2, PH + .2), w: num(i.w, .4, .005, 1.3), r: num(i.r, 0, -180, 180), z: Math.round(num(i.z, 1, 0, 9999)) };
+  if (i.t === 'p') { if (!okAsset(i.asset)) return null; Object.assign(it, { asset: i.asset, ar: num(i.ar, .75, .2, 5), type: String(i.type || '').slice(0, 40), taken: isDate(i.taken) ? i.taken : '', cap: String(i.cap || '').slice(0, 200), fr: has(FR, i.fr) ? i.fr : 'w' }); if (+i.cr > 0) it.cr = num(i.cr, 1, .2, 5); }
+  else if (i.t === 's') it.s = has(ST, i.s) ? i.s : 'heart';
+  else if (i.t === 'n') { it.text = String(i.text || '').slice(0, 500); it.st = has(NT, i.st) ? i.st : 'yellow'; }
+  else if (i.t === 'd') { if (typeof i.pts !== 'string' || !/^[0-9, ]{3,8000}$/.test(i.pts)) return null; Object.assign(it, { pts: i.pts.trim(), ar: num(i.ar, .5, .003, 60), col: penOk(i.col) ? i.col : 'ink', sw: num(i.sw, 8, .3, 600) }); }
+  else return null;
+  return it;
+}
+function cleanPage(doc) {
+  const d = doc.data() || {};
+  return { id: doc.id, n: Number.isFinite(+d.n) ? +d.n : 0, bg: has(BG, d.bg) ? d.bg : 'black', items: (Array.isArray(d.items) ? d.items : []).map(cleanItem).filter(Boolean) };
+}
+
+/* ---------- header & routing ---------- */
+function renderHeader() {
+  if (document.activeElement !== el.title) el.title.textContent = siteTitle || DEF_TITLE;
+  const albs = allAlbums(), n = albs.reduce((s, a) => s + a.nph, 0);
+  el.sub.textContent = albs.length ? `${albs.length} цомог · ${n} зураг` : '';
+}
+function setView(v) {
+  if (v !== 'album' && view === 'album') leaveAlbum();
+  view = v;
+  el.vShelf.hidden = v !== 'shelf'; el.vTl.hidden = v !== 'timeline'; el.vWall.hidden = v !== 'wall'; el.vAlb.hidden = v !== 'album'; el.top.hidden = v === 'album';
+  el.tabWall.setAttribute('aria-current', v === 'wall' ? 'page' : 'false');
+  el.tabShelf.setAttribute('aria-current', v === 'shelf' ? 'page' : 'false');
+  el.tabTl.setAttribute('aria-current', v === 'timeline' ? 'page' : 'false');
+}
+function route() {
+  const h = location.hash.slice(1);
+  closeLb();
+  if (h === 'timeline') { setView('timeline'); tlDone = false; loadTimeline(); }
+  else if (h === 'wall') { setView('wall'); tlDone = false; loadTimeline(); }
+  else if (/^a-[a-z0-9]{4,30}$/i.test(h)) { setView('album'); syncAlbum(h.slice(2)); }
+  else { setView('shelf'); renderShelf(); }
+  scrollTo(0, 0);
+}
+function onLists() {
+  renderHeader();
+  if (view === 'shelf') renderShelf();
+  else if (view === 'album') syncAlbum();
+  else if ((view === 'timeline' || view === 'wall') && !tlDone) loadTimeline();
+}
+
+/* ---------- shelf ---------- */
+const bookHTML = a => `<div class="bk"><a class="book" href="#a-${a.id}" style="--cv:${a.color}" aria-label="${esc(a.title)}"><span class="plate">${esc(a.title)}</span>${a.cover ? `<span class="win"><img src="/_blob/${esc(a.cover)}" alt="" loading="lazy"></span>` : ''}<span class="bst">${stSvg(a.sticker)}</span>${a.priv ? `<span class="lock">${I('lock')}Зөвхөн би</span>` : ''}</a><p class="bmeta">${a.np} хуудас · ${a.nph} зураг</p></div>`;
+const newHTML = p => `<div class="bk"><button class="book new" data-new="${p}">${I('plus')}Шинэ цомог</button></div>`;
+function renderShelf() {
+  if (!db) return;
+  const by = (x, y) => y.created - x.created;
+  const sh = shared.slice().sort(by), pr = priv.slice().sort(by);
+  let h = '';
+  if (canEdit) {
+    h += `<section class="sect"><h2>Гэр бүлд хуваалцсан</h2><p class="sd">Линк өгсөн хүмүүс эдгээрийг харна.</p><div class="shelf">${sh.map(bookHTML).join('')}${newHTML(0)}</div></section>`;
+    if (uid) h += `<section class="sect"><h2>Зөвхөн надад</h2><p class="sd">Эдгээрийг таниас өөр хэн ч харахгүй.</p><div class="shelf">${pr.map(bookHTML).join('')}${newHTML(1)}</div></section>`;
+  } else if (sh.length) {
+    h = `<section class="sect"><div class="shelf">${sh.map(bookHTML).join('')}</div></section>`;
+  } else if (sharedOk) {
+    h = `<div class="empty"><p class="e1">Одоохондоо цомог алга</p><p>Удахгүй энд цомог нэмэгдэнэ.</p></div>`;
+  }
+  el.shelf.innerHTML = h;
+}
+el.shelf.addEventListener('click', e => { const b = e.target.closest('[data-new]'); if (b) openAlbForm(null, b.dataset.new === '1'); });
+
+/* ---------- album form ---------- */
+let formAlb = null, fColor = COV[0], fSticker = 'heart';
+function drawForm() {
+  el.fColors.innerHTML = COV.map(c => `<button type="button" data-c="${c}" style="--c:${c}" aria-pressed="${c === fColor}" aria-label="Өнгө"></button>`).join('');
+  el.fStk.innerHTML = Object.keys(ST).filter(k => ST[k][2] === 1 && !ST[k][4]).map(k => `<button type="button" data-k="${k}" aria-pressed="${k === fSticker}" aria-label="${ST[k][0]}">${stSvg(k)}</button>`).join('');
+}
+function openAlbForm(a, privDef) {
+  formAlb = a;
+  el.fAlbH.textContent = a ? 'Цомгийн тохиргоо' : 'Шинэ цомог';
+  el.fTitle.value = a ? a.title : '';
+  fColor = a ? a.color : COV[Math.floor(Math.random() * COV.length)];
+  fSticker = a ? a.sticker : 'heart';
+  const p = a ? a.priv : !!privDef;
+  for (const r of el.fAlb.querySelectorAll('input[name=priv]')) { r.checked = r.value === (p ? '1' : '0'); r.disabled = !uid && r.value === '1'; }
+  for (const r of el.fAlb.querySelectorAll('input[name=bind]')) r.checked = r.value === (a ? a.bind : 'book');
+  el.fDel.hidden = !a;
+  drawForm(); el.mAlb.hidden = false; el.fTitle.focus();
+}
+const closeForm = () => { el.mAlb.hidden = true; formAlb = null; };
+el.fColors.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) { fColor = b.dataset.c; drawForm(); } });
+el.fStk.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) { fSticker = b.dataset.k; drawForm(); } });
+el.fCancel.addEventListener('click', closeForm);
+el.mAlb.addEventListener('click', e => { if (e.target === el.mAlb) closeForm(); });
+el.fAlb.addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!db || !canEdit) return;
+  const title = el.fTitle.value.replace(/\s+/g, ' ').trim().slice(0, 60) || 'Нэргүй цомог';
+  const toPriv = (el.fAlb.querySelector('input[name=priv]:checked') || {}).value === '1' && !!uid;
+  const bind = (el.fAlb.querySelector('input[name=bind]:checked') || {}).value === 'spiral' ? 'spiral' : 'book';
+  const a = formAlb; closeForm();
+  try {
+    if (!a) {
+      const n = { id: rid(), priv: toPriv, bind, title, color: fColor, sticker: fSticker, created: Date.now(), np: 1, nph: 0, cover: '' };
+      justMade = n.id;
+      await retry(() => albumDoc(n).set(albData(n)));
+      await retry(() => pagesCol(n).doc(rid()).set({ n: 1, bg: 'black', items: [] }));
+      location.hash = '#a-' + n.id;
+    } else if (a.priv !== toPriv) {
+      busyShow('Цомгийг зөөж байна…', .3);
+      if (album && album.id === a.id) leaveAlbum();
+      await moveAlbum(a, toPriv, { title, bind, color: fColor, sticker: fSticker });
+      busyHide(); syncAlbum(a.id);
+      toast(toPriv ? 'Одоо зөвхөн та харна' : 'Одоо гэр бүл тань харна');
+    } else {
+      await retry(() => albumDoc(a).update({ title, bind, color: fColor, sticker: fSticker }));
+    }
+  } catch (err) { busyHide(); toast('Хадгалж чадсангүй'); }
+});
+async function moveAlbum(a, toPriv, ch) {
+  const dst = Object.assign({}, a, ch, { priv: toPriv });
+  const s = await pagesCol(a).get();
+  await retry(() => albumDoc(dst).set(albData(dst)));
+  for (const d of s.docs) await retry(() => pagesCol(dst).doc(d.id).set(JSON.parse(JSON.stringify(d.data() || {}))));
+  for (const d of s.docs) await retry(() => pagesCol(a).doc(d.id).delete());
+  await retry(() => albumDoc(a).delete());
+}
+el.fDel.addEventListener('click', async () => {
+  const a = formAlb; if (!a) return;
+  closeForm();
+  if (!(await ask(`«${a.title}» цомгийг устгах уу?`, 'Бүх хуудас, зураг нь бүр мөсөн устна. Буцааж сэргээх боломжгүй.', 'Устгах'))) return;
+  busyShow('Устгаж байна…', .2);
+  try {
+    if (album && album.id === a.id) leaveAlbum();
+    const s = await pagesCol(a).get(), gone = [];
+    for (const d of s.docs) {
+      for (const i of ((d.data() || {}).items || [])) if (i && i.t === 'p' && okAsset(i.asset)) gone.push(i.asset);
+      await retry(() => pagesCol(a).doc(d.id).delete());
+    }
+    await retry(() => albumDoc(a).delete());
+    if (assets) for (const x of gone) await assets.delete(x).catch(() => {});
+    location.hash = ''; toast('Цомгийг устгалаа');
+  } catch (err) { toast('Устгаж чадсангүй'); }
+  busyHide();
+});
+
+/* ---------- album view ---------- */
+const perView = () => innerWidth >= 860 ? 2 : 1;
+const showPage = i => { const n = perView(); i = clamp(i, 0, Math.max(0, pages.length - 1)); pg = n === 2 ? i - (i % 2) : i; };
+function leaveAlbum() {
+  if (unsubPages) { unsubPages(); unsubPages = null; }
+  album = null; pages = []; pagesOk = false; editMode = false; selId = null; drag = null;
+  el.tray.hidden = true; document.body.classList.remove('traying'); el.vAlb.classList.remove('edit');
+}
+function syncAlbum(id) {
+  id = id || wantAlb; wantAlb = id;
+  const a = allAlbums().find(x => x.id === id);
+  if (!a) {
+    if (album && album.id === id) return;
+    el.aTitle.textContent = ''; el.aBadge.innerHTML = ''; el.spread.innerHTML = ''; el.pcount.textContent = '';
+    el.aStatus.textContent = (!(sharedOk && privOk) || justMade === id) ? 'Цомгийг нээж байна…' : 'Энэ цомог олдсонгүй эсвэл танд харагдахгүй байна.';
+    return;
+  }
+  if (!album || album.id !== a.id || album.priv !== a.priv) { leaveAlbum(); album = a; pg = 0; activePage = 0; subscribePages(a); }
+  else album = a;
+  renderAlbumBar(); renderAlbum();
+}
+function subscribePages(a) {
+  el.aStatus.textContent = 'Хуудсуудыг нээж байна…';
+  const t = setTimeout(() => { if (!pagesOk) el.aStatus.textContent = 'Холбогдож чадсангүй. Интернэтээ шалгаад дахин нээж үзээрэй.'; }, 10000);
+  const same = () => album && album.id === a.id && album.priv === a.priv;
+  try {
+    unsubPages = pagesCol(a).onSnapshot(s => {
+      if (!same()) return;
+      const local = new Map(pages.map(p => [p.id, p]));
+      const next = s.docs.map(d => {
+        const lp = local.get(d.id);
+        if (lp && (lp.busy || lp.timer || lp.dirty || (drag && drag.page === lp) || (stroke && stroke.page === lp))) return lp;
+        const np = cleanPage(d);
+        if (!lp) return np;
+        lp.n = np.n; lp.bg = np.bg;
+        const old = new Map(lp.items.map(i => [i.id, i]));
+        lp.items = np.items.map(i => { const o = old.get(i.id); if (!o) return i; for (const k of Object.keys(o)) if (!(k in i)) delete o[k]; return Object.assign(o, i); });
+        return lp;
+      });
+      for (const lp of pages) if ((lp.busy || lp.timer) && !lp.deleted && !next.some(p => p.id === lp.id)) next.push(lp);
+      pages = next.filter(p => !p.deleted).sort((x, y) => x.n - y.n);
+      if (!s.metadata.fromCache) { pagesOk = true; clearTimeout(t); el.aStatus.textContent = ''; }
+      if (wantPage && wantPage.aid === a.id && pagesOk) { showPage(wantPage.pi); activePage = pg; }
+      if (selId && !findSel()) { selId = null; if (editMode) renderTray(); }
+      if (drag || stroke) { pendingRender = true; return; }
+      renderAlbum();
+      if (wantPage && pagesOk) { const w = wantPage; wantPage = null; const n = document.getElementById('i-' + w.id); if (n) { n.classList.add('flash'); n.scrollIntoView({ block: 'center' }); } }
+      if (lb.open && lb.ctx === 'album') refreshLb(albumPhotos());
+    }, () => { clearTimeout(t); pagesOk = true; el.aStatus.textContent = 'Хуудсуудыг ачаалж чадсангүй. Дахин нээж үзээрэй.'; renderAlbum(); });
+  } catch (e) { el.aStatus.textContent = 'Энэ цомгийг нээх боломжгүй байна.'; }
+}
+function renderAlbumBar() {
+  if (!album) return;
+  el.aTitle.textContent = album.title;
+  el.aBadge.innerHTML = canEdit ? (album.priv ? `${I('lock')}Зөвхөн би харна` : `${I('users')}Гэр бүл харна`) : '';
+  el.aPrint.hidden = !dl; el.aSet.hidden = !canEdit; el.aEdit.hidden = !canEdit;
+  el.aEdit.innerHTML = editMode ? `${I('check')}Болсон` : `${I('pen')}Засах`;
+}
+function renderAlbum() {
+  if (!album) return;
+  el.vAlb.classList.toggle('edit', editMode);
+  el.aEmpty.hidden = !(pagesOk && !pages.length);
+  el.aEmptyMsg.textContent = canEdit ? '«Засах» товчийг дараад «Хуудас» хэсгээс хуудас нэмээрэй.' : 'Удахгүй хуудас нэмэгдэнэ.';
+  renderBook();
+}
+const cmtOn = () => !!cm && !!album && !album.priv && !editMode;
+function itemHTML(it) {
+  const sel = editMode && selId === it.id, c = cmtOn();
+  const st = `--x:${it.x};--y:${it.y};--w:${it.w};--r:${it.r}deg;--z:${it.z}`;
+  let inner = '', cls = '';
+  if (it.t === 'p') {
+    cls = 'ph fr-' + it.fr;
+    const card = it.fr === 'k' ? `<span class="kt">${esc(it.cap || (album && album.title) || '')}</span><span class="km">${esc(fmtDate(it.taken))}</span>` : '';
+    inner = `<div class="fr"${c ? ' data-comment-target' : ''}><img src="/_blob/${esc(it.asset)}" alt="${esc(it.cap || 'Зураг')}" style="aspect-ratio:1/${dispAr(it)}" loading="lazy" decoding="async" draggable="false"><i class="k k1"></i><i class="k k2"></i><i class="k k3"></i><i class="k k4"></i>${it.fr === 'p' && it.cap ? `<span class="pc in">${esc(it.cap)}</span>` : ''}${card}</div>${it.fr !== 'p' && it.fr !== 'k' && it.cap ? `<span class="pc">${esc(it.cap)}</span>` : ''}${c ? `<button class="cb" data-act="cmt" aria-label="Энэ зурагт сэтгэгдэл бичих">${I('cmt')}</button>` : ''}`;
+  } else if (it.t === 's') { cls = 'stk' + (ST[it.s][4] ? ' ink' : ''); inner = stSvg(it.s); }
+  else if (it.t === 'd') { cls = 'drw'; inner = `<svg viewBox="0 0 1000 ${Math.max(1, Math.round(1000 * it.ar))}" aria-hidden="true"><path d="${penPath(it.pts)}" fill="none" stroke="${it.col === 'ink' ? 'currentColor' : it.col}" stroke-width="${it.sw}" stroke-linecap="round" stroke-linejoin="round"/></svg>`; }
+  else { cls = 'note'; inner = `<div class="nt ${it.st}">${esc(it.text) || '&nbsp;'}</div>`; }
+  const hd = sel ? `<button class="hd del" data-act="del" aria-label="Устгах">${I('x')}</button><span class="hd rot" data-act="rot" title="Эргүүлэх, томруулах">${I('rot')}</span>` : '';
+  const kb = it.t === 'p' && !editMode ? ' tabindex="0" role="button"' : '';
+  return `<div class="it ${cls}${sel ? ' sel' : ''}" id="i-${esc(it.id)}" data-id="${esc(it.id)}" style="${st}"${kb}>${inner}${hd}</div>`;
+}
+const penPath = pts => pts.split(' ').filter(Boolean).map((q, i) => (i ? 'L' : 'M') + q.replace(',', ' ')).join('');
+const pageHTML = (p, i) => `<div class="page bg-${p.bg}${editMode && i === activePage ? ' active' : ''}" data-p="${i}">${p.items.slice().sort((a, b) => a.z - b.z).map(itemHTML).join('')}<span class="pno">${i + 1}</span></div>`;
+function renderBook() {
+  if (!album) return;
+  const n = perView();
+  showPage(pg);
+  const vis = pages.slice(pg, pg + n);
+  el.cover.hidden = !vis.length; el.cover.classList.toggle('one', n === 1 || vis.length === 1); el.cover.classList.toggle('spiral', album.bind === 'spiral');
+  el.vAlb.classList.toggle('pen', editMode && tab === 'pen');
+  el.spread.style.setProperty('--n', n);
+  el.spread.innerHTML = vis.map((p, j) => pageHTML(p, pg + j)).join('') + (n === 2 && vis.length === 1 ? `<div class="page blank bg-${vis[0].bg}"></div>` : '');
+  el.pcount.textContent = pages.length ? `${n === 2 && vis.length === 2 ? `${pg + 1}–${pg + 2}` : pg + 1} / ${pages.length}` : '';
+  el.pprev.disabled = pg <= 0; el.pnext.disabled = pg + n >= pages.length;
+  el.pprev.parentElement.hidden = !pages.length;
+}
+function setVars(node, it) { node.style.setProperty('--x', it.x); node.style.setProperty('--y', it.y); node.style.setProperty('--w', it.w); node.style.setProperty('--r', it.r + 'deg'); }
+function findSel() { if (!selId) return null; for (const p of pages) { const it = p.items.find(i => i.id === selId); if (it) return { p, it }; } return null; }
+function redrawItem(it) { const n = document.getElementById('i-' + it.id); if (n) n.outerHTML = itemHTML(it); }
+function applySel() {
+  for (const n of el.spread.querySelectorAll('.it.sel')) { n.classList.remove('sel'); n.querySelectorAll('.hd').forEach(h => h.remove()); }
+  const s = findSel(); if (s) redrawItem(s.it);
+}
+function markActive() { for (const n of el.spread.querySelectorAll('.page[data-p]')) n.classList.toggle('active', editMode && +n.dataset.p === activePage); }
+function nav(d) { if (!pages.length) return; const n = perView(); const np = clamp(pg + d * n, 0, pages.length - 1); if (np === pg && (pg + n >= pages.length || pg === 0)) return; pg = np; activePage = pg; if (editMode) { selId = null; renderTray(); } renderBook(); }
+el.pprev.addEventListener('click', () => nav(-1));
+el.pnext.addEventListener('click', () => nav(1));
+
+/* saving */
+function savePage(p, delay) {
+  if (!canEdit || !album) return;
+  clearTimeout(p.timer); p.timer = null;
+  if (delay) { p.timer = setTimeout(() => { p.timer = null; flush(p); }, delay); return; }
+  flush(p);
+}
+async function flush(p) {
+  p.dirty = true; if (p.busy) return;
+  p.busy = true; const a = album;
+  while (p.dirty && !p.deleted) {
+    p.dirty = false;
+    try { await retry(() => pagesCol(a).doc(p.id).set({ n: p.n, bg: p.bg, items: p.items })); }
+    catch (e) { toast(e && e.code === 'quota_exceeded' ? 'Хадгалах зай дүүрсэн байна' : 'Өөрчлөлтийг хадгалж чадсангүй'); break; }
+  }
+  p.busy = false; syncCounts();
+}
+let cntT = 0;
+function syncCounts() {
+  clearTimeout(cntT); const a = album;
+  cntT = setTimeout(() => {
+    if (!a || !album || album.id !== a.id || !canEdit) return;
+    const ph = pages.flatMap(p => p.items.filter(i => i.t === 'p'));
+    const np = pages.length, nph = ph.length, cover = ph[0] ? ph[0].asset : '';
+    if (np !== album.np || nph !== album.nph || cover !== album.cover) albumDoc(album).update({ np, nph, cover }).catch(() => {});
+  }, 1500);
+}
+function newPage(after) {
+  const prev = pages[after], next = pages[after + 1];
+  const n = prev ? (next ? (prev.n + next.n) / 2 : prev.n + 1) : (next ? next.n - 1 : 1);
+  const p = { id: rid(), n, bg: prev ? prev.bg : 'black', items: [] };
+  pages.splice(after + 1, 0, p); savePage(p); return p;
+}
+function addItem(page, props, focus) {
+  if (!page) { page = newPage(pages.length - 1); activePage = pages.indexOf(page); showPage(activePage); }
+  const z = page.items.reduce((m, i) => Math.max(m, i.z), 0) + 1;
+  const it = cleanItem(Object.assign({ id: rid(), x: .5 + (Math.random() - .5) * .2, y: PH / 2 + (Math.random() - .5) * .3, r: Math.round((Math.random() - .5) * 10), z }, props));
+  if (!it) return;
+  page.items.push(it); selId = it.id; savePage(page); renderBook(); renderTray();
+  if (focus) { const ta = $('sText'); if (ta) { ta.focus(); ta.select(); } }
+}
+async function removeItem(p, it) {
+  if (it.t === 'p' && !(await ask('Энэ зургийг устгах уу?', 'Зураг цомгоос бүр мөсөн устна.', 'Устгах'))) return;
+  p.items = p.items.filter(i => i !== it);
+  if (selId === it.id) selId = null;
+  savePage(p); renderBook(); renderTray();
+  if (it.t === 'p' && assets) setTimeout(() => assets.delete(it.asset).catch(() => {}), 2500);
+}
+
+/* pointer: select, drag, rotate/scale, swipe */
+el.spread.addEventListener('pointerdown', e => {
+  const pageEl = e.target.closest('.page[data-p]'); if (!pageEl || !album) return;
+  if (!editMode) { swipe = { x: e.clientX, y: e.clientY }; return; }
+  const pi = +pageEl.dataset.p, page = pages[pi]; if (!page) return;
+  if (activePage !== pi) { activePage = pi; markActive(); if (!selId && tab === 'page') renderTray(); }
+  if (tab === 'pen') { e.preventDefault(); startStroke(e, pageEl, page); return; }
+  const itEl = e.target.closest('.it');
+  if (!itEl) { if (selId) { selId = null; applySel(); renderTray(); } return; }
+  const it = page.items.find(x => x.id === itEl.dataset.id); if (!it) return;
+  const act = (e.target.closest('[data-act]') || {}).dataset;
+  if (act && act.act === 'del') { e.preventDefault(); removeItem(page, it); return; }
+  e.preventDefault();
+  if (selId !== it.id) { selId = it.id; applySel(); renderTray(); }
+  const node = document.getElementById('i-' + it.id);
+  const R = pageEl.getBoundingClientRect(), W = R.width;
+  drag = { node, page, it, mode: act && act.act === 'rot' ? 'rot' : 'move', W, sx: e.clientX, sy: e.clientY, ix: it.x, iy: it.y, iw: it.w, ir: it.r, moved: false, pid: e.pointerId };
+  if (drag.mode === 'rot') { drag.cx = R.left + it.x * W; drag.cy = R.top + it.y * W; drag.a0 = Math.atan2(e.clientY - drag.cy, e.clientX - drag.cx); drag.d0 = Math.max(10, Math.hypot(e.clientX - drag.cx, e.clientY - drag.cy)); }
+  try { el.spread.setPointerCapture(e.pointerId); } catch (err) {}
+});
+el.spread.addEventListener('pointermove', e => {
+  if (stroke && e.pointerId === stroke.pid) { moveStroke(e); return; }
+  if (!drag || e.pointerId !== drag.pid) return;
+  const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+  if (!drag.moved && Math.hypot(dx, dy) < 3) return;
+  drag.moved = true; const it = drag.it;
+  if (drag.mode === 'move') { it.x = clamp(drag.ix + dx / drag.W, -.08, 1.08); it.y = clamp(drag.iy + dy / drag.W, -.08, PH + .08); }
+  else {
+    const a = Math.atan2(e.clientY - drag.cy, e.clientX - drag.cx);
+    let r = drag.ir + (a - drag.a0) * 180 / Math.PI; r = ((r + 540) % 360) - 180;
+    it.r = Math.round(r * 10) / 10;
+    it.w = clamp(drag.iw * Math.hypot(e.clientX - drag.cx, e.clientY - drag.cy) / drag.d0, .05, 1.2);
+  }
+  if (drag.node && drag.node.isConnected) setVars(drag.node, it);
+});
+const SVGNS = 'http://www.w3.org/2000/svg';
+function startStroke(e, pageEl, page) {
+  if (selId) { selId = null; applySel(); renderTray(); }
+  const R = pageEl.getBoundingClientRect(), W = R.width;
+  const ov = document.createElementNS(SVGNS, 'svg'); ov.setAttribute('viewBox', `0 0 1000 ${Math.round(1000 * PH)}`); ov.setAttribute('class', 'pen-ov');
+  const pl = document.createElementNS(SVGNS, 'polyline');
+  const col = pen.c === 'ink' ? (getComputedStyle(pageEl).getPropertyValue('--pi').trim() || '#f3ede2') : pen.c;
+  for (const [k, v] of [['fill', 'none'], ['stroke', col], ['stroke-width', String(pen.w * 1000)], ['stroke-linecap', 'round'], ['stroke-linejoin', 'round']]) pl.setAttribute(k, v);
+  ov.appendChild(pl); pageEl.appendChild(ov);
+  stroke = { page, R, W, ov, pl, pid: e.pointerId, pts: [[(e.clientX - R.left) / W, (e.clientY - R.top) / W]] };
+  drawStroke();
+  try { el.spread.setPointerCapture(e.pointerId); } catch (err) {}
+}
+function drawStroke() { stroke.pl.setAttribute('points', stroke.pts.map(q => `${Math.round(q[0] * 1000)},${Math.round(q[1] * 1000)}`).join(' ')); }
+function moveStroke(e) {
+  const q = [(e.clientX - stroke.R.left) / stroke.W, (e.clientY - stroke.R.top) / stroke.W], l = stroke.pts[stroke.pts.length - 1];
+  if (Math.hypot(q[0] - l[0], q[1] - l[1]) < .003 || stroke.pts.length >= 600) return;
+  stroke.pts.push(q); drawStroke();
+}
+function endStroke(ok) {
+  const s = stroke; stroke = null; s.ov.remove();
+  if (!ok) return;
+  const pts = s.pts.length === 1 ? [s.pts[0], [s.pts[0][0] + .001, s.pts[0][1]]] : s.pts, pad = pen.w;
+  const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+  const minx = Math.min(...xs) - pad, maxx = Math.max(...xs) + pad, miny = Math.min(...ys) - pad, maxy = Math.max(...ys) + pad;
+  const bw = Math.max(maxx - minx, .01), bh = Math.max(maxy - miny, .005);
+  const str = pts.map(q => `${Math.round((q[0] - minx) / bw * 1000)},${Math.round((q[1] - miny) / bw * 1000)}`).join(' ');
+  const z = s.page.items.reduce((m, i) => Math.max(m, i.z), 0) + 1;
+  const it = cleanItem({ id: rid(), t: 'd', pts: str, ar: bh / bw, col: pen.c, sw: Math.round(pen.w / bw * 10000) / 10, x: minx + bw / 2, y: miny + bh / 2, w: bw, r: 0, z });
+  if (!it) return;
+  s.page.items.push(it); savePage(s.page);
+  const pageEl = el.spread.querySelector(`.page[data-p="${pages.indexOf(s.page)}"]`);
+  if (pageEl) pageEl.insertAdjacentHTML('beforeend', itemHTML(it)); else renderBook();
+}
+function endPointer(e) {
+  if (stroke && e.pointerId === stroke.pid) { endStroke(e.type === 'pointerup'); if (pendingRender) { pendingRender = false; renderBook(); } return; }
+  if (swipe && !editMode) {
+    const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y; swipe = null;
+    if (e.type === 'pointerup' && Math.abs(dx) > 60 && Math.abs(dy) < Math.abs(dx) * .6) { swiped = true; setTimeout(() => { swiped = false; }, 300); nav(dx < 0 ? 1 : -1); }
+    return;
+  }
+  if (!drag || e.pointerId !== drag.pid) return;
+  const d = drag; drag = null;
+  if (d.moved) { const it = d.it; it.x = Math.round(it.x * 1e4) / 1e4; it.y = Math.round(it.y * 1e4) / 1e4; it.w = Math.round(it.w * 1e4) / 1e4; savePage(d.page); }
+  if (pendingRender) { pendingRender = false; renderBook(); }
+}
+el.spread.addEventListener('pointerup', endPointer);
+el.spread.addEventListener('pointercancel', endPointer);
+el.spread.addEventListener('click', e => {
+  if (editMode || swiped) return;
+  const cb = e.target.closest('[data-act=cmt]');
+  if (cb) { e.stopPropagation(); openCmt(cb.closest('.it')); return; }
+  const it = e.target.closest('.it.ph');
+  if (it) openAlbumLb(it.dataset.id);
+});
+el.spread.addEventListener('keydown', e => {
+  if (editMode) return;
+  const it = e.target.closest && e.target.closest('.it.ph');
+  if (it && (e.key === 'Enter' || e.key === ' ') && e.target === it) { e.preventDefault(); openAlbumLb(it.dataset.id); }
+});
+function openCmt(itEl) {
+  if (!cm || !itEl) return;
+  const fr = itEl.querySelector('.fr') || itEl;
+  cm.openComposer({ element: fr }).then(r => { if (r && r.opened === false) toast('Сэтгэгдлийн цонх нээгдсэнгүй, дахин дарж үзээрэй'); }).catch(() => toast('Энд сэтгэгдэл бичих боломжгүй байна'));
+}
+
+/* edit mode & tray */
+el.aEdit.addEventListener('click', () => {
+  if (!pagesOk && !editMode) { toast('Хуудсууд ачаалж байна, түр хүлээнэ үү'); return; }
+  editMode = !editMode; selId = null; activePage = pg;
+  if (!editMode) for (const p of pages) if (p.timer) { clearTimeout(p.timer); p.timer = null; flush(p); }
+  renderAlbumBar(); renderAlbum(); renderTray();
+});
+el.aSet.addEventListener('click', () => { if (album) openAlbForm(album); });
+function tabHTML(t) {
+  const page = pages[activePage];
+  if (t === 'photo') return `<button class="btn pri" data-t="upload">${I('plus')}Зураг сонгох</button><p class="hint">Олон зургийг зэрэг сонгож болно. Тасархай хүрээтэй хуудсанд 6 хүртэл зураг цэгцтэй орж, илүү бол шинэ хуудас нэмэгдэнэ. Зургийг чирж зөөгөөд, улбар шар бөмбөлгөөр нь эргүүлж томруулна.</p>`;
+  if (t === 'sticker') { const ks = Object.keys(ST), b = k => `<button data-st="${k}" class="${ST[k][4] ? 'ink' : ''}" aria-label="${ST[k][0]}" title="${ST[k][0]}">${stSvg(k)}</button>`; return `<div class="stsec">Цагаан үзгээр зурсан мэт · хуудасны өнгөнд тохирно</div><div class="stgrid">${ks.filter(k => ST[k][4]).map(b).join('')}</div><div class="stsec" style="margin-top:14px">Өнгөт стикер</div><div class="stgrid">${ks.filter(k => !ST[k][4]).map(b).join('')}</div>`; }
+  if (t === 'pen') return `<div class="fl" style="margin-top:0">Үзэгний өнгө</div><div class="sw">${PEN.map(([c, l]) => `<button data-pc="${c}" style="--c:${c === 'ink' ? 'linear-gradient(135deg,#fff 50%,#1d1d20 50%)' : c}" aria-pressed="${pen.c === c}" aria-label="${l}" title="${l}"></button>`).join('')}</div><div class="fl">Зузаан</div><div class="seg">${PENW.map(([w, l]) => `<button class="chip" data-pw="${w}" aria-pressed="${pen.w === w}">${l}</button>`).join('')}<button class="btn sm" data-pg="undo">${I('back')}Сүүлийн зураасыг арилгах</button></div><p class="hint">Тасархай хүрээтэй хуудсан дээр хуруу эсвэл хулганаараа чөлөөтэй зураарай. Зурсан зүйлээ зөөх, устгах бол өөр хэсэг рүү шилжээд дээр нь дарна.</p>`;
+  if (t === 'note') return `<div class="ntgrid">${Object.entries(NT).map(([k, v]) => `<button data-nt="${k}"><span class="nt ${k}">${v}</span></button>`).join('')}</div><div class="fl">Бэлэн үгс</div><div class="seg">${LABELS.map(l => `<button class="chip" data-lbl="${esc(l)}">${esc(l)}</button>`).join('')}</div>`;
+  return `<div class="fl">${page ? `${activePage + 1}-р хуудасны өнгө` : 'Хуудас алга'}</div><div class="sw">${page ? Object.entries(BG).map(([k, v]) => `<button data-bg="${k}" class="bgsw bg-${k}" aria-pressed="${page.bg === k}" aria-label="${v[0]}" title="${v[0]}"></button>`).join('') : ''}</div><div class="seg" style="margin-top:14px"><button class="btn sm" data-pg="add">${I('plus')}Хуудас нэмэх</button>${page ? `<button class="btn sm" data-pg="tidy">${I('grid')}Цэгцлэх</button><button class="btn sm" data-pg="collage">${I('grid')}Коллаж болгох</button><button class="btn sm" data-pg="left">${I('back')}Өмнө нь зөөх</button><button class="btn sm" data-pg="right">Хойш нь зөөх${I('next')}</button><button class="btn sm danger" data-pg="del">${I('trash')}Хуудас устгах</button>` : ''}</div>`;
+}
+function selHTML(it) {
+  const common = `<div class="seg"><button class="btn sm" data-s="front">${I('up')}Урд гаргах</button><button class="btn sm" data-s="back">${I('down')}Ард оруулах</button><button class="btn sm danger" data-s="del">${I('trash')}Устгах</button><button class="btn sm pri" data-s="done">${I('check')}Болсон</button></div>`;
+  if (it.t === 'p') return `<div class="tsel"><div class="two"><label class="tl">Тайлбар<input id="sCap" class="fld" maxlength="200" placeholder="Жишээ нь: Эмээгийн төрсөн өдөр"></label><label class="tl">Огноо<input id="sDate" class="fld" type="date"></label></div><div class="seg">${Object.entries(FR).map(([k, v]) => `<button class="chip" data-s="fr" data-v="${k}" aria-pressed="${it.fr === k}">${v}</button>`).join('')}</div>${common}</div>`;
+  if (it.t === 'd') return `<div class="tsel"><div class="seg">${PEN.map(([c, l]) => `<button class="chip" data-s="col" data-v="${c}" aria-pressed="${it.col === c}">${l}</button>`).join('')}</div>${common}</div>`;
+  if (it.t === 'n') return `<div class="tsel"><label class="tl">Бичвэр<textarea id="sText" class="fld" maxlength="500" rows="2"></textarea></label><div class="seg">${Object.entries(NT).map(([k, v]) => `<button class="chip" data-s="nt" data-v="${k}" aria-pressed="${it.st === k}">${v}</button>`).join('')}</div>${common}</div>`;
+  return `<div class="tsel"><p class="hint" style="margin:0">Стикерийг чирж зөөнө. Улбар шар бөмбөлгөөр нь эргүүлж, томруулна.</p>${common}</div>`;
+}
+function renderTray() {
+  el.tray.hidden = !editMode; document.body.classList.toggle('traying', editMode);
+  el.vAlb.classList.toggle('pen', editMode && tab === 'pen');
+  if (!editMode) return;
+  const s = findSel();
+  el.ttabs.hidden = !!s;
+  if (s) {
+    el.tbody.innerHTML = selHTML(s.it);
+    const cap = $('sCap'), dt = $('sDate'), tx = $('sText'), { p, it } = s;
+    if (cap) { cap.value = it.cap; cap.addEventListener('input', () => { it.cap = cap.value.slice(0, 200); redrawItem(it); savePage(p, 800); }); }
+    if (dt) { dt.value = it.taken; dt.addEventListener('change', () => { it.taken = isDate(dt.value) ? dt.value : ''; savePage(p); }); }
+    if (tx) { tx.value = it.text; tx.addEventListener('input', () => { it.text = tx.value.slice(0, 500); redrawItem(it); savePage(p, 800); }); }
+    return;
+  }
+  for (const b of el.ttabs.children) b.setAttribute('aria-selected', String(b.dataset.tab === tab));
+  el.tbody.innerHTML = tabHTML(tab);
+}
+el.tray.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !album) return;
+  const d = b.dataset, page = pages[activePage];
+  if (d.tab) { tab = d.tab; if (tab === 'pen' && selId) { selId = null; applySel(); } renderTray(); return; }
+  if (d.pc) { pen.c = penOk(d.pc) ? d.pc : 'ink'; renderTray(); return; }
+  if (d.pw) { pen.w = +d.pw || .006; renderTray(); return; }
+  if (d.t === 'upload') { el.file.click(); return; }
+  if (d.st) { addItem(page, { t: 's', s: d.st, w: ST[d.st][2] < .5 ? .42 : .22 }); return; }
+  if (d.nt) { addItem(page, { t: 'n', st: d.nt, text: d.nt === 'title' ? 'Гарчиг' : 'Энд бичээрэй', w: d.nt === 'title' ? .7 : d.nt === 'plain' || d.nt === 'quote' ? .46 : .38 }, true); return; }
+  if (d.lbl) { addItem(page, { t: 'n', st: 'tag', text: d.lbl, w: .42 }); return; }
+  if (d.bg && page) { page.bg = has(BG, d.bg) ? d.bg : 'black'; savePage(page); renderBook(); renderTray(); return; }
+  if (d.pg) { pageOp(d.pg); return; }
+  if (d.s) selOp(d.s, d.v);
+});
+function selOp(op, v) {
+  if (op === 'done') { selId = null; applySel(); renderTray(); return; }
+  const s = findSel(); if (!s) { selId = null; renderTray(); return; } const { p, it } = s;
+  if (op === 'del') { removeItem(p, it); return; }
+  if (op === 'fr') { it.fr = has(FR, v) ? v : 'c'; redrawItem(it); savePage(p); renderTray(); return; }
+  if (op === 'nt') { it.st = has(NT, v) ? v : 'yellow'; redrawItem(it); savePage(p); renderTray(); return; }
+  if (op === 'col') { it.col = penOk(v) ? v : 'ink'; redrawItem(it); savePage(p); renderTray(); return; }
+  if (op === 'front' || op === 'back') {
+    const arr = p.items.slice().sort((a, b) => a.z - b.z).filter(i => i !== it);
+    if (op === 'front') arr.push(it); else arr.unshift(it);
+    arr.forEach((i, k) => { i.z = k + 1; });
+    savePage(p); renderBook();
+  }
+}
+async function pageOp(op) {
+  const i = activePage, p = pages[i];
+  if (op === 'add') { newPage(p ? i : pages.length - 1); activePage = p ? i + 1 : pages.length - 1; showPage(activePage); renderAlbum(); renderTray(); syncCounts(); return; }
+  if (!p) return;
+  if (op === 'tidy') {
+    const ph = p.items.filter(x => x.t === 'p').sort((a, b) => (a.y - b.y) || (a.x - b.x));
+    ph.slice(0, PER).forEach((it, k) => { it.x = CELLS[k][0]; it.y = CELLS[k][1]; it.w = cellW(it.ar); it.r = Math.round((Math.random() - .5) * 20) / 10; delete it.cr; if (it.fr === 'n') it.fr = 'w'; });
+    savePage(p); renderBook(); toast(ph.length > PER ? `Эхний ${PER} зургийг цэгцэллээ` : 'Зургуудыг цэгцэллээ'); return;
+  }
+  if (op === 'collage') {
+    const ph = p.items.filter(x => x.t === 'p').sort((a, b) => (a.y - b.y) || (a.x - b.x)), n = Math.min(ph.length, 12);
+    if (!n) { toast('Энэ хуудсанд зураг алга'); return; }
+    const [cols, rows] = n <= 1 ? [1, 1] : n <= 2 ? [1, 2] : n <= 4 ? [2, 2] : n <= 6 ? [2, 3] : n <= 9 ? [3, 3] : [3, 4];
+    const m = .045, g = .012, cw = (1 - 2 * m - (cols - 1) * g) / cols, ch = (PH - 2 * m - (rows - 1) * g) / rows;
+    ph.slice(0, n).forEach((it, k) => { const c = k % cols, rr = Math.floor(k / cols); it.x = m + cw / 2 + c * (cw + g); it.y = m + ch / 2 + rr * (ch + g); it.w = Math.round(cw * 1e4) / 1e4; it.cr = Math.round(ch / cw * 1000) / 1000; it.r = 0; it.fr = 'n'; });
+    savePage(p); renderBook(); toast(ph.length > 12 ? 'Эхний 12 зургийг коллаж болголоо' : 'Коллаж боллоо'); return;
+  }
+  if (op === 'undo') {
+    let k = -1; p.items.forEach((x, j) => { if (x.t === 'd') k = j; });
+    if (k < 0) { toast('Арилгах зураас алга'); return; }
+    p.items.splice(k, 1); savePage(p); renderBook(); return;
+  }
+  if (op === 'left' || op === 'right') {
+    const j = op === 'left' ? i - 1 : i + 1; if (j < 0 || j >= pages.length) return;
+    const q = pages[j]; const t = p.n; p.n = q.n; q.n = t;
+    if (p.n === q.n) p.n += op === 'left' ? -.5 : .5;
+    pages.sort((x, y) => x.n - y.n); savePage(p); savePage(q);
+    activePage = j; showPage(j); renderBook(); renderTray(); return;
+  }
+  if (op === 'del') {
+    if (!(await ask('Энэ хуудсыг устгах уу?', p.items.some(x => x.t === 'p') ? 'Хуудсан дээрх зургууд хамт устна.' : 'Хуудас бүр мөсөн устна.', 'Устгах'))) return;
+    p.deleted = true; clearTimeout(p.timer); pages = pages.filter(x => x !== p);
+    try { await retry(() => pagesCol(album).doc(p.id).delete()); } catch (e) { toast('Устгаж чадсангүй'); }
+    if (assets) p.items.filter(x => x.t === 'p').forEach(x => assets.delete(x.asset).catch(() => {}));
+    activePage = clamp(i, 0, Math.max(0, pages.length - 1)); showPage(activePage); renderAlbum(); renderTray(); syncCounts();
+  }
+}
+
+/* uploads */
+const isImg = f => /^image\//.test(f.type) || /\.(heic|heif|jpe?g|png|webp|gif)$/i.test(f.name);
+async function shrink(f) {
+  try {
+    const bm = await createImageBitmap(f, { imageOrientation: 'from-image' });
+    const W0 = bm.width, H0 = bm.height;
+    if (/gif/i.test(f.type)) { if (bm.close) bm.close(); return { blob: f, w: W0, h: H0 }; }
+    const k = Math.min(1, 2048 / Math.max(W0, H0)), w = Math.round(W0 * k), h = Math.round(H0 * k);
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h); cx.drawImage(bm, 0, 0, w, h);
+    if (bm.close) bm.close();
+    const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', .87));
+    if (!blob) throw new Error('encode');
+    if (k === 1 && f.type === 'image/jpeg' && f.size <= blob.size) return { blob: f, w, h };
+    return { blob, w, h };
+  } catch (e) { return { blob: f, w: 0, h: 0 }; }
+}
+async function addPhotos(files) {
+  if (!assets || !album || upBusy) return;
+  if (!pagesOk) { toast('Хуудсууд ачаалж байна, түр хүлээгээд дахин оролдоорой'); return; }
+  const list = files.filter(isImg);
+  if (!list.length) { toast('Зөвхөн зураг оруулна уу'); return; }
+  upBusy = true; const a = album; let ok = 0, bad = 0, why = '';
+  let page = pages[activePage] || newPage(pages.length - 1);
+  for (let k = 0; k < list.length; k++) {
+    if (!album || album.id !== a.id) break;
+    busyShow(`Зураг хадгалж байна… ${k + 1} / ${list.length}`, k / list.length);
+    const f = list[k];
+    try {
+      const { blob, w, h } = await shrink(f);
+      const type = blob.type;
+      if (!/^image\/(jpeg|png|webp|gif)$/.test(type)) throw { code: 'unsupported_type' };
+      const r = await retry(() => assets.upload(blob, { type }));
+      if (!album || album.id !== a.id) { assets.delete(r.id).catch(() => {}); break; }
+      if (!pages.includes(page)) page = pages[pages.length - 1] || newPage(-1);
+      let cnt = page.items.filter(i => i.t === 'p').length;
+      if (cnt >= PER) { page = newPage(pages.indexOf(page)); cnt = 0; }
+      const [x, y] = CELLS[cnt], z = page.items.reduce((m, i) => Math.max(m, i.z), 0) + 1;
+      const ar = w && h ? h / w : .75;
+      const it = cleanItem({ id: rid(), t: 'p', asset: r.id, type: r.contentType || type, ar, taken: ymd(f.lastModified), cap: '', fr: 'w', x, y, w: cellW(ar), r: Math.round((Math.random() - .5) * 30) / 10, z });
+      if (it) { page.items.push(it); savePage(page); ok++; }
+      activePage = pages.indexOf(page); showPage(activePage);
+      if (!drag) renderBook();
+    } catch (e) {
+      bad++; why = ERR[e && e.code] || why;
+      if (e && (e.code === 'quota_or_state' || e.code === 'quota_exceeded')) { bad += list.length - k - 1; break; }
+    }
+  }
+  busyHide(); upBusy = false; syncCounts();
+  if (editMode) renderTray();
+  toast(bad ? `${ok} зураг нэмэгдлээ, ${bad} нь хадгалагдсангүй. ${why}` : `${ok} зураг нэмэгдлээ`);
+}
+el.file.addEventListener('change', () => { const fs = [...el.file.files]; el.file.value = ''; if (fs.length) addPhotos(fs); });
+let dz = 0;
+const dropOk = e => !!assets && view === 'album' && editMode && !!e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+addEventListener('dragenter', e => { if (!dropOk(e)) return; e.preventDefault(); dz++; el.veil.hidden = false; });
+addEventListener('dragover', e => { if (!dropOk(e)) return; e.preventDefault(); });
+addEventListener('dragleave', () => { if (el.veil.hidden) return; dz = Math.max(0, dz - 1); if (!dz) el.veil.hidden = true; });
+addEventListener('drop', e => { if (!dropOk(e)) return; e.preventDefault(); dz = 0; el.veil.hidden = true; addPhotos([...e.dataTransfer.files]); });
+
+/* ---------- lightbox ---------- */
+function albumPhotos() { const out = []; pages.forEach((p, pi) => p.items.filter(i => i.t === 'p').sort((x, y) => x.y - y.y || x.x - y.x).forEach(it => out.push({ it, a: album, pi }))); return out; }
+function openAlbumLb(id) { const list = albumPhotos(); const i = list.findIndex(e => e.it.id === id); if (i >= 0) openLb(list, i, 'album'); }
+function openLb(list, i, ctx) {
+  lb.list = list; lb.cur = i; lb.ctx = ctx; lb.ids = ''; lb.open = true; lb.focus = document.activeElement;
+  el.lb.hidden = false; document.body.style.overflow = 'hidden';
+  drawLb(); el.lbClose.focus();
+}
+function closeLb() {
+  if (!lb.open) return;
+  lb.open = false; el.lb.hidden = true; document.body.style.overflow = ''; el.lbTrack.innerHTML = ''; lb.ids = '';
+  if (lb.focus && document.contains(lb.focus)) lb.focus.focus();
+}
+function refreshLb(list) {
+  const keep = lb.list[lb.cur] && lb.list[lb.cur].it.id;
+  lb.list = list; let i = list.findIndex(e => e.it.id === keep);
+  if (i < 0) i = Math.min(lb.cur, list.length - 1);
+  if (i < 0) { closeLb(); return; }
+  lb.cur = i; drawLb();
+}
+function drawLb() {
+  const ids = lb.list.map(e => e.it.id).join(',');
+  if (ids !== lb.ids) {
+    lb.ids = ids;
+    el.lbTrack.innerHTML = lb.list.map((e, j) => `<div class="slide"><img src="/_blob/${esc(e.it.asset)}" alt="${esc(e.it.cap || 'Зураг')}" loading="${Math.abs(j - lb.cur) < 2 ? 'eager' : 'lazy'}" decoding="async"></div>`).join('');
+    const snap = () => { el.lbTrack.scrollLeft = lb.cur * el.lbTrack.clientWidth; };
+    snap(); requestAnimationFrame(snap);
+  }
+  lbInfo();
+}
+function lbInfo() {
+  const e = lb.list[lb.cur]; if (!e) return;
+  el.lbCount.textContent = `${lb.cur + 1} / ${lb.list.length}`;
+  el.lbPrev.disabled = lb.cur <= 0; el.lbNext.disabled = lb.cur >= lb.list.length - 1;
+  el.lbCap.textContent = e.it.cap;
+  el.lbMeta.textContent = [fmtDate(e.it.taken), e.a.title].filter(Boolean).join(' · ');
+  el.lbGo.hidden = lb.ctx !== 'timeline';
+  el.lbCmt.hidden = !(lb.ctx === 'album' && cm && !e.a.priv);
+  el.lbDl.hidden = !dl;
+}
+let lbRaf = 0;
+el.lbTrack.addEventListener('scroll', () => {
+  cancelAnimationFrame(lbRaf);
+  lbRaf = requestAnimationFrame(() => { const w = el.lbTrack.clientWidth; if (!w) return; const i = clamp(Math.round(el.lbTrack.scrollLeft / w), 0, lb.list.length - 1); if (i !== lb.cur) { lb.cur = i; lbInfo(); } });
+}, { passive: true });
+const lbGo = d => { const i = lb.cur + d; if (i < 0 || i >= lb.list.length) return; el.lbTrack.scrollTo({ left: i * el.lbTrack.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
+el.lbPrev.addEventListener('click', () => lbGo(-1));
+el.lbNext.addEventListener('click', () => lbGo(1));
+el.lbClose.addEventListener('click', closeLb);
+const lbRo = new ResizeObserver(() => { if (lb.open) el.lbTrack.scrollLeft = lb.cur * el.lbTrack.clientWidth; });
+lbRo.observe(el.lbTrack);
+el.lbGo.addEventListener('click', () => { const e = lb.list[lb.cur]; if (!e) return; wantPage = { aid: e.a.id, pi: e.pi, id: e.it.id }; closeLb(); location.hash = '#a-' + e.a.id; });
+el.lbCmt.addEventListener('click', () => {
+  const e = lb.list[lb.cur]; if (!e || !cm) return;
+  closeLb(); showPage(e.pi); renderBook();
+  const n = document.getElementById('i-' + e.it.id);
+  if (n) { n.scrollIntoView({ block: 'center' }); openCmt(n); }
+});
+el.lbDl.addEventListener('click', async () => {
+  const e = lb.list[lb.cur]; if (!e || !dl) return;
+  el.lbDl.disabled = true;
+  try {
+    const res = await fetch('/_blob/' + e.it.asset); if (!res.ok) throw new Error('fetch');
+    const blob = await res.blob();
+    const ext = { 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }[e.it.type] || 'jpg';
+    await dl.save({ filename: `zurag-${e.it.taken || 'photo'}.${ext}`, data: blob });
+  } catch (err) { if (!err || err.code !== 'declined') toast(err && err.code === 'host_unavailable' ? 'Энд татах боломжгүй, хөтөч эсвэл компьютер дээрээс нээнэ үү' : 'Татаж чадсангүй'); }
+  el.lbDl.disabled = false;
+});
+
+/* ---------- timeline ---------- */
+async function loadTimeline() {
+  if (!db) return;
+  const v = view, st = v === 'wall' ? el.wStatus : el.tlStatus;
+  if (!(sharedOk && privOk)) { st.textContent = 'Нээж байна…'; return; }
+  tlDone = true; const seq = ++tlSeq;
+  st.textContent = 'Зургуудыг цуглуулж байна…';
+  const out = [];
+  await Promise.all(allAlbums().map(async a => {
+    try { const s = await pagesCol(a).get(); s.docs.map(cleanPage).sort((x, y) => x.n - y.n).forEach((p, pi) => p.items.forEach(it => { if (it.t === 'p') out.push({ it, a, pi }); })); } catch (e) {}
+  }));
+  if (seq !== tlSeq || view !== v) return;
+  out.sort((x, y) => (y.it.taken || '').localeCompare(x.it.taken || '') || x.a.title.localeCompare(y.a.title));
+  tlList = out;
+  if (v === 'wall') { renderWall(); return; }
+  el.tlStatus.textContent = out.length ? '' : 'Одоохондоо зураг алга. Цомогт зураг нэмэхэд энд он, сараар нь цэгцэрч харагдана.';
+  const years = new Map();
+  out.forEach((e, k) => { const y = e.it.taken.slice(0, 4), m = e.it.taken.slice(5, 7); if (!years.has(y)) years.set(y, new Map()); const ms = years.get(y); if (!ms.has(m)) ms.set(m, []); ms.get(m).push(k); });
+  el.tlYears.innerHTML = out.length ? [...years].map(([y, ms]) => `<button class="chip" data-y="${y || 'none'}">${y ? y + ' он' : 'Огноогүй'}<b>${[...ms.values()].reduce((s, a) => s + a.length, 0)}</b></button>`).join('') : '';
+  el.tlBody.innerHTML = [...years].map(([y, ms]) => `<section class="tly" id="y-${y || 'none'}"><h2 class="yh">${y ? y + ' он' : 'Огноогүй зургууд'}</h2>${[...ms].map(([m, ks]) => `${y ? `<h3 class="mh">${+m}-р сар</h3>` : ''}<div class="tlg">${ks.map(k => { const e = out[k]; return `<button class="tp" data-k="${k}" style="--r:${((k * 37) % 7 - 3) * .5}deg"><span class="tpi"><img src="/_blob/${esc(e.it.asset)}" alt="${esc(e.it.cap || 'Зураг')}" loading="lazy" decoding="async"></span><span class="tpd">${fmtDate(e.it.taken) || 'Огноогүй'}</span><span class="tpa">${esc(e.a.title)}${e.a.priv ? ' · Зөвхөн би' : ''}</span></button>`; }).join('')}</div>`).join('')}</section>`).join('');
+}
+function renderWall() {
+  el.wStatus.textContent = tlList.length ? `${tlList.length} зураг` : 'Одоохондоо зураг алга. Цомогт зураг нэмэхэд энд хана болж харагдана.';
+  el.wShuf.hidden = tlList.length < 2;
+  el.wall.innerHTML = tlList.map((e, k) => `<button class="wt" data-k="${k}" aria-label="${esc(e.it.cap || 'Зураг')}"><img src="/_blob/${esc(e.it.asset)}" alt="" loading="lazy" decoding="async"></button>`).join('');
+}
+el.wall.addEventListener('click', e => { const b = e.target.closest('.wt'); if (b) openLb(tlList, +b.dataset.k, 'timeline'); });
+el.wShuf.addEventListener('click', () => { for (let i = tlList.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [tlList[i], tlList[j]] = [tlList[j], tlList[i]]; } renderWall(); });
+el.tlYears.addEventListener('click', e => { const b = e.target.closest('[data-y]'); if (b) { const s = $('y-' + b.dataset.y); if (s) s.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } });
+el.tlBody.addEventListener('click', e => { const b = e.target.closest('.tp'); if (b) openLb(tlList, +b.dataset.k, 'timeline'); });
+
+/* ---------- print to PDF ---------- */
+const PX = 1240, PY = Math.round(1240 * PH);
+const imgCache = new Map(), stUrl = {};
+function loadImg(src) { if (!imgCache.has(src)) imgCache.set(src, new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => { imgCache.delete(src); rej(new Error('img')); }; im.src = src; })); return imgCache.get(src); }
+function stickerImg(k, col) {
+  const s = ST[k], key = k + '|' + (s[4] ? col : '');
+  if (!stUrl[key]) { const [, , vw, vh] = s[1].split(' ').map(Number); stUrl[key] = URL.createObjectURL(new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${s[1]}" width="${vw * 6}" height="${vh * 6}">${s[4] ? s[3].replace(/currentColor/g, col || '#f3ede2') : s[3]}</svg>`], { type: 'image/svg+xml' })); }
+  return loadImg(stUrl[key]);
+}
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+function wrapText(x, text, maxW) {
+  const out = [];
+  for (const para of String(text).split('\n')) {
+    let line = '';
+    for (const word of para.split(' ')) {
+      const t = line ? line + ' ' + word : word;
+      if (x.measureText(t).width <= maxW || !line) {
+        if (x.measureText(t).width > maxW) { let chunk = ''; for (const ch of t) { if (x.measureText(chunk + ch).width > maxW && chunk) { out.push(chunk); chunk = ch; } else chunk += ch; } line = chunk; }
+        else line = t;
+      } else { out.push(line); line = word; }
+    }
+    out.push(line);
+  }
+  return out;
+}
+function drawBg(x, bg, f) {
+  x.fillStyle = BG[bg] ? BG[bg][1] : '#232228'; x.fillRect(0, 0, PX, PY);
+  if (bg === 'dots') { x.fillStyle = '#d9d3c8'; for (let i = 31; i < PX; i += 62) for (let j = 31; j < PY; j += 62) { x.beginPath(); x.arc(i, j, 4, 0, 7); x.fill(); } }
+  if (bg === 'kraft') { x.strokeStyle = 'rgba(90,60,20,.07)'; x.lineWidth = 3; for (let i = -PY; i < PX; i += 18) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + PY * .47, PY); x.stroke(); } }
+  if (f) { const g = x.createLinearGradient(f > 0 ? PX : 0, 0, f > 0 ? PX - 70 : 70, 0); g.addColorStop(0, 'rgba(0,0,0,.35)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, PX, PY); }
+}
+function polyFill(x, pts, color) { x.fillStyle = color; x.beginPath(); pts.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath(); x.fill(); }
+async function drawItem(x, it, bg) {
+  const W = it.w * PX, ink = BG[bg] ? BG[bg][2] : '#f3ede2';
+  x.save(); x.translate(it.x * PX, it.y * PX); x.rotate(it.r * Math.PI / 180);
+  const shadow = () => { x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = W * .03; x.shadowOffsetY = W * .012; };
+  const noShadow = () => { x.shadowColor = 'transparent'; x.shadowBlur = 0; x.shadowOffsetY = 0; };
+  if (it.t === 'p') {
+    let im = null; try { im = await loadImg('/_blob/' + it.asset); } catch (e) {}
+    const fr = it.fr, ar = dispAr(it);
+    const pd = fr === 'p' || fr === 'k' ? W * .05 : fr === 'w' ? W * .022 : 0, iw = W - 2 * pd, ih = iw * ar, fs = fr === 'p' ? W * .085 : W * .11;
+    x.font = `500 ${fs}px Caveat`;
+    const lines = it.cap && fr !== 'k' ? wrapText(x, it.cap, fr === 'p' ? iw : W * 1.1).slice(0, 2) : [];
+    let kLines = [], kMeta = '';
+    if (fr === 'k') { x.font = `800 ${W * .1}px Nunito`; kLines = wrapText(x, (it.cap || (album && album.title) || '').toUpperCase(), iw).slice(0, 2); kMeta = fmtDate(it.taken); }
+    const kH = W * .04 + kLines.length * W * .102 + (kMeta ? W * .062 : 0) + W * .04;
+    const fh = fr === 'p' ? pd + ih + W * .2 : fr === 'k' ? pd + ih + kH : ih + 2 * pd;
+    const capH = fr !== 'p' && fr !== 'k' && lines.length ? W * .03 + lines.length * fs * 1.1 : 0;
+    const top = -(fh + capH) / 2;
+    shadow();
+    if (fr === 'p' || fr === 'w' || fr === 'k') { x.fillStyle = fr === 'w' ? '#f4f2ee' : fr === 'k' ? '#f7f6f2' : '#fbfaf6'; x.fillRect(-W / 2, top, W, fh); noShadow(); }
+    x.save();
+    if (fr === 'o') { noShadow(); x.beginPath(); x.arc(0, top + ih / 2, iw / 2, 0, Math.PI * 2); x.clip(); }
+    if (im) {
+      const r0 = im.naturalHeight / im.naturalWidth; let sx = 0, sy = 0, sw = im.naturalWidth, sh = im.naturalHeight;
+      if (r0 > ar) { sh = sw * ar; sy = (im.naturalHeight - sh) / 2; } else { sw = sh / ar; sx = (im.naturalWidth - sw) / 2; }
+      x.drawImage(im, sx, sy, sw, sh, -iw / 2, top + pd, iw, ih);
+    } else { x.fillStyle = '#3a3940'; x.fillRect(-iw / 2, top + pd, iw, ih); }
+    x.restore(); noShadow();
+    if (fr === 'k') {
+      x.textAlign = 'left'; x.textBaseline = 'top'; x.fillStyle = '#151515'; x.font = `800 ${W * .1}px Nunito`;
+      let yy = top + pd + ih + W * .04; kLines.forEach(l => { x.fillText(l, -iw / 2, yy); yy += W * .102; });
+      if (kMeta) { x.font = `600 ${W * .036}px Nunito`; x.fillStyle = '#5c5a55'; x.fillText(kMeta, -iw / 2, yy + W * .015); }
+    }
+    if (it.fr === 'c') {
+      const s = W * .09, o = W * .024, L = -iw / 2 - o, R = iw / 2 + o, T = top - o, B = top + ih + o, c = '#e9e1d0';
+      polyFill(x, [[L, T], [L + s, T], [L, T + s]], c); polyFill(x, [[R, T], [R - s, T], [R, T + s]], c);
+      polyFill(x, [[L, B], [L + s, B], [L, B - s]], c); polyFill(x, [[R, B], [R - s, B], [R, B - s]], c);
+    }
+    if (it.fr === 't') { x.save(); x.translate(0, top); x.rotate(-3 * Math.PI / 180); x.fillStyle = 'rgba(255,200,218,.92)'; x.fillRect(-W * .2, -W * .05, W * .4, W * .1); x.restore(); }
+    if (lines.length) {
+      x.textAlign = 'center'; x.textBaseline = 'top';
+      x.fillStyle = it.fr === 'p' ? '#3a3633' : ink;
+      const y0 = it.fr === 'p' ? top + pd + ih + (W * .2 - lines.length * fs * 1.1) / 2 : top + fh + W * .03;
+      lines.forEach((l, i) => x.fillText(l, 0, y0 + i * fs * 1.1));
+    }
+  } else if (it.t === 's') {
+    try { const im = await stickerImg(it.s, ink); const h = W * ST[it.s][2]; x.shadowColor = 'rgba(0,0,0,.28)'; x.shadowBlur = W * .03; x.shadowOffsetY = W * .01; x.drawImage(im, -W / 2, -h / 2, W, h); } catch (e) {}
+  } else if (it.t === 'd') {
+    const pts = it.pts.split(' ').filter(Boolean).map(q => q.split(',').map(Number)), h = W * it.ar;
+    x.strokeStyle = it.col === 'ink' ? ink : it.col; x.lineWidth = it.sw / 1000 * W; x.lineCap = 'round'; x.lineJoin = 'round';
+    x.beginPath(); pts.forEach(([a, b], i) => { const px = -W / 2 + a / 1000 * W, py = -h / 2 + b / 1000 * W; if (i) x.lineTo(px, py); else x.moveTo(px, py); }); x.stroke();
+  } else {
+    const st = it.st, bare = st === 'plain' || st === 'title' || st === 'quote';
+    const fs = W * (st === 'title' ? .22 : st === 'quote' ? .11 : .13), lh = fs * (st === 'title' ? 1 : 1.15), padX = bare ? W * .02 : st === 'tag' ? W * .12 : W * .08, padY = bare ? W * .02 : W * .08;
+    x.font = `${st === 'title' ? 700 : 500} ${fs}px Caveat`;
+    const txt = st === 'title' ? (it.text || ' ').toUpperCase() : st === 'quote' ? `“${it.text || ''}”` : (it.text || ' ');
+    const lines = wrapText(x, txt, W - 2 * padX), h = lines.length * lh + 2 * padY, top = -h / 2;
+    const fill = { yellow: '#ffe680', lined: '#fffdf7', tag: '#ff8fab', kraft: '#cfa874' }[st];
+    if (fill) {
+      if (st !== 'tag') shadow();
+      if (st === 'tag') polyFill(x, [[-W / 2, top], [W / 2, top], [W / 2 - W * .05, 0], [W / 2, -top], [-W / 2, -top], [-W / 2 + W * .05, 0]], fill);
+      else { x.fillStyle = fill; x.beginPath(); if (x.roundRect && st === 'kraft') x.roundRect(-W / 2, top, W, h, W * .03); else x.rect(-W / 2, top, W, h); x.fill(); }
+      noShadow();
+      if (st === 'lined') { x.strokeStyle = '#b9d3ee'; x.lineWidth = 2; for (let yy = top + padY + lh; yy < top + h - 2; yy += lh) { x.beginPath(); x.moveTo(-W / 2, yy); x.lineTo(W / 2, yy); x.stroke(); } }
+    }
+    x.fillStyle = { yellow: '#3a3220', lined: '#2b2a33', tag: '#ffffff', kraft: '#3b2a17' }[st] || ink;
+    x.textAlign = 'center'; x.textBaseline = 'top';
+    if (st === 'title') { x.strokeStyle = ink; x.lineWidth = W * .006; x.lineJoin = 'round'; lines.forEach((l, i) => x.strokeText(l, 0, top + padY + i * lh + fs * .04)); }
+    else lines.forEach((l, i) => x.fillText(l, 0, top + padY + i * lh + fs * .04));
+  }
+  x.restore();
+}
+async function drawPage(p, side) {
+  const c = document.createElement('canvas'); c.width = PX; c.height = PY;
+  const x = c.getContext('2d'); drawBg(x, p.bg, side);
+  for (const it of p.items.slice().sort((a, b) => a.z - b.z)) await drawItem(x, it, p.bg);
+  return c;
+}
+async function drawCover(a) {
+  const c = document.createElement('canvas'); c.width = PX; c.height = PY; const x = c.getContext('2d');
+  x.fillStyle = a.color; x.fillRect(0, 0, PX, PY);
+  x.strokeStyle = 'rgba(255,255,255,.05)'; x.lineWidth = 3; for (let i = -PY; i < PX; i += 14) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + PY, PY); x.stroke(); }
+  x.fillStyle = 'rgba(0,0,0,.22)'; x.fillRect(0, 0, 70, PY);
+  x.font = '700 120px Caveat'; const lines = wrapText(x, a.title, 820).slice(0, 3), ph = lines.length * 130 + 110;
+  x.shadowColor = 'rgba(0,0,0,.3)'; x.shadowBlur = 20; x.fillStyle = '#f6f0e4'; x.fillRect(200, 260, 880, ph); x.shadowColor = 'transparent';
+  x.fillStyle = '#2b2a2f'; x.textAlign = 'center'; x.textBaseline = 'top'; lines.forEach((l, i) => x.fillText(l, 640, 310 + i * 130));
+  try { const im = await stickerImg(a.sticker); x.drawImage(im, 760, 1240, 360, 360); } catch (e) {}
+  return c;
+}
+async function printPages() {
+  if (!album || !dl) { toast('Энд PDF татах боломжгүй байна'); return; }
+  if (!pages.length) { toast('Хэвлэх хуудас алга'); return; }
+  const a = album, ps = pages.slice();
+  el.aPrint.disabled = true;
+  try {
+    busyShow('PDF бэлдэж байна…', 0);
+    if (!window.jspdf) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await Promise.all([document.fonts.load('500 60px Caveat'), document.fonts.load('700 60px Caveat')]).catch(() => {});
+    const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+    pdf.addImage((await drawCover(a)).toDataURL('image/jpeg', .9), 'JPEG', 0, 0, 210, 297);
+    for (let i = 0; i < ps.length; i++) {
+      busyShow(`PDF бэлдэж байна… ${i + 1} / ${ps.length}`, (i + 1) / (ps.length + 1));
+      const c = await drawPage(ps[i], i % 2 ? -1 : 1);
+      pdf.addPage(); pdf.addImage(c.toDataURL('image/jpeg', .88), 'JPEG', 0, 0, 210, 297);
+    }
+    busyHide();
+    const name = (a.title.replace(/[\\/:*?"<>|]+/g, '').trim() || 'tsomog') + '.pdf';
+    await dl.save({ filename: name, data: pdf.output('blob') });
+  } catch (e) {
+    busyHide();
+    if (!e || e.code !== 'declined') toast(e && e.code === 'host_unavailable' ? 'Энд татах боломжгүй, хөтөч эсвэл компьютер дээрээс нээнэ үү' : 'PDF бэлдэж чадсангүй, дахин оролдоорой');
+  }
+  el.aPrint.disabled = false;
+}
+function drawCard(x, e, cx, cy, cw, im) {
+  const ch = cw * 1.36, pd = cw * .06, side = cw - 2 * pd;
+  x.fillStyle = '#fbfaf7'; x.fillRect(cx, cy, cw, ch);
+  x.save(); x.strokeStyle = '#bdb9b1'; x.lineWidth = 2; x.setLineDash([12, 10]); x.strokeRect(cx - 1, cy - 1, cw + 2, ch + 2); x.restore();
+  if (im) { const s0 = Math.min(im.naturalWidth, im.naturalHeight); x.drawImage(im, (im.naturalWidth - s0) / 2, (im.naturalHeight - s0) / 2, s0, s0, cx + pd, cy + pd, side, side); }
+  else { x.fillStyle = '#dddad3'; x.fillRect(cx + pd, cy + pd, side, side); }
+  const fs = cw * .085; x.font = `800 ${fs}px Nunito`; x.fillStyle = '#151515'; x.textAlign = 'left'; x.textBaseline = 'top';
+  let y = cy + pd + side + cw * .05;
+  wrapText(x, (e.it.cap || e.a.title).toUpperCase(), side).slice(0, 2).forEach(l => { x.fillText(l, cx + pd, y); y += fs * 1.02; });
+  const meta = [fmtDate(e.it.taken), e.it.cap ? e.a.title : ''].filter(Boolean).join(' · ');
+  if (meta) { x.font = `600 ${cw * .034}px Nunito`; x.fillStyle = '#5c5a55'; x.fillText(wrapText(x, meta, side)[0], cx + pd, y + cw * .02); }
+}
+async function printCards() {
+  if (!album || !dl) { toast('Энд PDF татах боломжгүй байна'); return; }
+  const list = albumPhotos();
+  if (!list.length) { toast('Энэ цомогт зураг алга'); return; }
+  const a = album; el.aPrint.disabled = true;
+  try {
+    busyShow('Карт бэлдэж байна…', 0);
+    if (!window.jspdf) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await Promise.all([document.fonts.load('800 40px Nunito'), document.fonts.load('600 20px Nunito')]).catch(() => {});
+    const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+    const m = 70, cw = (PX - 3 * m) / 2, ch = cw * 1.36, y0 = (PY - (2 * ch + m)) / 2;
+    for (let s0 = 0; s0 < list.length; s0 += 4) {
+      busyShow(`Карт бэлдэж байна… ${Math.min(s0 + 4, list.length)} / ${list.length}`, s0 / list.length);
+      const c = document.createElement('canvas'); c.width = PX; c.height = PY; const x = c.getContext('2d');
+      x.fillStyle = '#ffffff'; x.fillRect(0, 0, PX, PY);
+      for (let k = 0; k < 4 && s0 + k < list.length; k++) {
+        const e = list[s0 + k]; let im = null; try { im = await loadImg('/_blob/' + e.it.asset); } catch (err) {}
+        drawCard(x, e, m + (k % 2) * (cw + m), y0 + Math.floor(k / 2) * (ch + m), cw, im);
+      }
+      if (s0) pdf.addPage();
+      pdf.addImage(c.toDataURL('image/jpeg', .9), 'JPEG', 0, 0, 210, 297);
+    }
+    busyHide();
+    await dl.save({ filename: (a.title.replace(/[\\/:*?"<>|]+/g, '').trim() || 'tsomog') + ' - kart.pdf', data: pdf.output('blob') });
+  } catch (e) {
+    busyHide();
+    if (!e || e.code !== 'declined') toast(e && e.code === 'host_unavailable' ? 'Энд татах боломжгүй, хөтөч эсвэл компьютер дээрээс нээнэ үү' : 'PDF бэлдэж чадсангүй, дахин оролдоорой');
+  }
+  el.aPrint.disabled = false;
+}
+el.aPrint.addEventListener('click', () => { if (!album || !dl) { toast('Энд PDF татах боломжгүй байна'); return; } el.mPrint.hidden = false; el.prPages.focus(); });
+el.prPages.addEventListener('click', () => { el.mPrint.hidden = true; printPages(); });
+el.prCards.addEventListener('click', () => { el.mPrint.hidden = true; printCards(); });
+el.prCancel.addEventListener('click', () => { el.mPrint.hidden = true; });
+el.mPrint.addEventListener('click', e => { if (e.target === el.mPrint) el.mPrint.hidden = true; });
+
+/* ---------- title, keys, resize ---------- */
+el.title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.title.blur(); } });
+el.title.addEventListener('blur', async () => {
+  if (!canEdit || !db) return;
+  const t = el.title.textContent.replace(/\s+/g, ' ').trim().slice(0, 80);
+  if (!t) { el.title.textContent = siteTitle || DEF_TITLE; return; }
+  if (t === (siteTitle || DEF_TITLE)) return;
+  try { await db.doc('meta/site').set({ title: t }); } catch (e) { toast('Нэрийг хадгалж чадсангүй'); el.title.textContent = siteTitle || DEF_TITLE; }
+});
+document.addEventListener('keydown', e => {
+  if (askDone) { if (e.key === 'Escape') askDone(false); return; }
+  if (!el.mAlb.hidden) { if (e.key === 'Escape') closeForm(); return; }
+  if (!el.mPrint.hidden) { if (e.key === 'Escape') el.mPrint.hidden = true; return; }
+  if (lb.open) {
+    if (e.key === 'Escape') closeLb();
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); lbGo(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); lbGo(1); }
+    return;
+  }
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (view !== 'album' || tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement && document.activeElement.isContentEditable)) return;
+  if (e.key === 'Escape' && editMode && selId) { selId = null; applySel(); renderTray(); return; }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && editMode) { const s = findSel(); if (s) { e.preventDefault(); removeItem(s.p, s.it); } return; }
+  if (e.key === 'ArrowLeft') nav(-1);
+  if (e.key === 'ArrowRight') nav(1);
+});
+let lastPV = perView();
+addEventListener('resize', () => { const v = perView(); if (v !== lastPV) { lastPV = v; if (view === 'album') { showPage(activePage || pg); renderBook(); } } });
+
+/* ---------- start ---------- */
+(async () => {
+  setView('shelf');
+  const C = window.claude;
+  if (!C || typeof C.use !== 'function') { el.shStatus.textContent = 'Хуудсыг дахин ачаалж үзээрэй.'; return; }
+  [db, user] = await Promise.all([C.use('db'), C.use('user')]);
+  if (!db) { el.shStatus.textContent = 'Энэ цомгийг харах эрх танд алга байна.'; return; }
+  try { canEdit = !!(user && await user.canEdit()); } catch (e) { canEdit = false; }
+  try { uid = (user && await user.id()) || ''; } catch (e) { uid = ''; }
+  if (uid && !/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(uid)) uid = '';
+  [assets, dl, cm] = await Promise.all([C.use('assets'), C.use('downloads'), C.use('comments')]);
+  if (canEdit) {
+    try { el.title.contentEditable = 'plaintext-only'; } catch (e) {}
+    if (el.title.contentEditable !== 'plaintext-only') el.title.contentEditable = 'true';
+    el.title.title = 'Дарж нэрийг нь өөрчилнө';
+  }
+  const t0 = setTimeout(() => { if (!sharedOk) el.shStatus.textContent = 'Холбогдож чадсангүй. Интернэтээ шалгаад дахин нээж үзээрэй.'; }, 10000);
+  db.collection('albums').onSnapshot(s => {
+    shared = s.docs.map(d => cleanAlb(d.id, d.data(), false)).filter(Boolean);
+    if (!s.metadata.fromCache) { sharedOk = true; clearTimeout(t0); el.shStatus.textContent = ''; }
+    onLists();
+  }, () => { sharedOk = true; clearTimeout(t0); el.shStatus.textContent = 'Цомгуудыг ачаалж чадсангүй. Дахин нээж үзээрэй.'; onLists(); });
+  if (canEdit && uid) {
+    try {
+      db.collection('data/users/' + uid).onSnapshot(s => {
+        priv = s.docs.filter(d => (d.data() || {}).kind === 'album').map(d => cleanAlb(d.id, d.data(), true)).filter(Boolean);
+        privOk = true; onLists();
+      }, () => { privOk = true; onLists(); });
+    } catch (e) { uid = ''; privOk = true; }
+  } else privOk = true;
+  db.doc('meta/site').onSnapshot(s => { siteTitle = s.exists ? String((s.data() || {}).title || '').slice(0, 80) : ''; renderHeader(); }, () => {});
+  addEventListener('hashchange', route);
+  route();
+})();
+}
+</script>
+</body>
+</html>

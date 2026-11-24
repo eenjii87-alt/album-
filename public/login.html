@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Нэвтрэх · Гэр бүлийн цомог</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#18171c;--bg2:#24232a;--ink:#f2ece0;--mute:#aaa398;--line:#3d3b44;--acc:#ff7a66}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(90% 70% at 35% 25%,rgba(255,244,222,.38),transparent 65%),repeating-linear-gradient(91deg,rgba(110,70,35,.09) 0 2px,transparent 2px 9px,rgba(110,70,35,.05) 9px 11px,transparent 11px 26px),linear-gradient(90deg,#c99d70,#d6ad81 35%,#c8996b 62%,#d3a87a);color:var(--ink);font:16px/1.55 'Nunito',system-ui,sans-serif}
+.book{width:min(420px,100%);padding:clamp(12px,3vw,18px);border-radius:8px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.07) 0 1px,transparent 1px 3px),linear-gradient(160deg,#9a9ca0,#86888c);box-shadow:0 34px 50px -10px rgba(70,40,12,.55)}
+.page{background:radial-gradient(120% 90% at 50% 40%,#25252a,#19191c);border-radius:3px;padding:clamp(22px,6vw,36px);position:relative}
+.page::before,.page::after{content:"";position:absolute;width:26px;height:26px;background:linear-gradient(135deg,#f7f1e5,#d8cfbd)}
+.page::before{top:10px;left:10px;clip-path:polygon(0 0,100% 0,0 100%)}
+.page::after{bottom:10px;right:10px;clip-path:polygon(100% 0,100% 100%,0 100%)}
+h1{font:700 46px/1 'Caveat',cursive;margin:6px 0 8px;text-align:center}
+p{margin:0 0 16px;color:var(--mute);text-align:center}
+label{display:block;font-size:14px;color:var(--mute);margin-bottom:6px}
+input{width:100%;min-height:50px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);padding:0 14px;font:18px 'Nunito',system-ui,sans-serif}
+input.code{font-size:28px;letter-spacing:10px;text-align:center;font-variant-numeric:tabular-nums}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button.go{margin-top:14px;width:100%;min-height:50px;border:0;border-radius:999px;background:var(--acc);color:#2b0f0a;font:800 17px 'Nunito',system-ui,sans-serif;cursor:pointer}
+button.go:disabled{opacity:.55;cursor:default}
+.row{display:flex;justify-content:space-between;gap:10px;margin-top:14px;font-size:14px}
+.row button{all:unset;cursor:pointer;color:#ff9b8a;font-weight:700;padding:6px 0}
+.row button:disabled{color:var(--mute);cursor:default}
+.msg{min-height:24px;margin:12px 0 0;text-align:center;font-weight:700;color:#ffb2a6}
+.msg.ok{color:#9be3a8}
+.foot{margin:18px 0 0;font-size:13px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main class="book">
+  <div class="page">
+    <h1>Гэр бүлийн цомог</h1>
+    <form id="f1">
+      <p>Имэйл хаягаа оруулбал нэвтрэх код илгээнэ.</p>
+      <label for="email">Имэйл</label>
+      <input id="email" type="email" autocomplete="email" inputmode="email" required placeholder="name@gmail.com">
+      <button class="go" id="b1" type="submit">Код авах</button>
+    </form>
+    <form id="f2" hidden>
+      <p id="sentTo"></p>
+      <label for="code">6 оронтой код</label>
+      <input id="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
+      <button class="go" id="b2" type="submit">Нэвтрэх</button>
+      <div class="row"><button type="button" id="back">Өөр имэйл</button><button type="button" id="again" disabled>Дахин илгээх</button></div>
+    </form>
+    <p id="msg" class="msg" role="status"></p>
+    <p class="foot">Зөвхөн сайтын эзний зөвшөөрсөн имэйлээр нэвтэрнэ. Код ирэхгүй бол спам хавтсаа шалгаарай.</p>
+  </div>
+</main>
+<script>
+{
+const $ = id => document.getElementById(id);
+const qs = new URLSearchParams(location.search);
+const raw = qs.get('next') || '/';
+const next = /^\/(?!\/)/.test(raw) && !raw.startsWith('/login') ? raw : '/';
+const MSG = { bad_email: 'Имэйл хаяг буруу байна.', mail_not_ready: 'Имэйл илгээх тохиргоо хийгдээгүй байна. Сайтын эзэнд хэлээрэй.', wait: 'Түр хүлээгээд дахин оролдоорой.', mail_failed: 'Имэйл илгээж чадсангүй. Түр хүлээгээд дахин оролдоорой.', wrong_code: 'Код буруу байна.', expired: 'Кодын хугацаа дууссан эсвэл олон удаа буруу оруулсан. Шинэ код аваарай.' };
+const say = (t, ok) => { $('msg').textContent = t || ''; $('msg').className = 'msg' + (ok ? ' ok' : ''); };
+if (qs.get('setup') === 'bad') say('Энэ нэвтрэх линк хүчингүй болсон байна. Имэйлээрээ нэвтэрнэ үү.');
+let email = '', t = 0;
+async function post(path, body) {
+  const r = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), credentials: 'same-origin' });
+  const j = await r.json().catch(() => ({ error: 'net' }));
+  return r.ok && !j.error ? j : { error: j.error || 'net' };
+}
+function cooldown() {
+  let s = 45; $('again').disabled = true; clearInterval(t);
+  t = setInterval(() => { s--; $('again').textContent = s > 0 ? `Дахин илгээх (${s})` : 'Дахин илгээх'; if (s <= 0) { clearInterval(t); $('again').disabled = false; } }, 1000);
+}
+async function start() {
+  email = $('email').value.trim().toLowerCase();
+  if (!email) return;
+  $('b1').disabled = true; say('Илгээж байна…', true);
+  const j = await post('/api/login/start', { email });
+  $('b1').disabled = false;
+  if (j.error) { say(MSG[j.error] || 'Алдаа гарлаа, дахин оролдоорой.'); return; }
+  say('');
+  $('f1').hidden = true; $('f2').hidden = false;
+  $('sentTo').textContent = `Хэрэв ${email} хаяг зөвшөөрөгдсөн бол код руу нь явлаа.`;
+  $('code').value = ''; $('code').focus(); cooldown();
+}
+$('f1').addEventListener('submit', e => { e.preventDefault(); start(); });
+$('again').addEventListener('click', start);
+$('back').addEventListener('click', () => { $('f2').hidden = true; $('f1').hidden = false; say(''); $('email').focus(); });
+$('code').addEventListener('input', () => { $('code').value = $('code').value.replace(/\D/g, '').slice(0, 6); if ($('code').value.length === 6) $('f2').requestSubmit(); });
+$('f2').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('b2').disabled = true; say('Шалгаж байна…', true);
+  const j = await post('/api/login/verify', { email, code: $('code').value });
+  if (j.error) { $('b2').disabled = false; say(MSG[j.error] || 'Алдаа гарлаа, дахин оролдоорой.'); return; }
+  say('Амжилттай!', true); location.href = next;
+});
+$('email').focus();
+}
+</script>
+</body>
+</html>

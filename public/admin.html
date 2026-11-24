@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Удирдлага · Гэр бүлийн цомог</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#18171c;--bg2:#24232a;--bg3:#302f37;--ink:#f2ece0;--mute:#aaa398;--line:#3d3b44;--acc:#ff7a66;--ok:#9be3a8}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 'Nunito',system-ui,sans-serif}
+[hidden]{display:none!important}
+.wrap{max-width:900px;margin:0 auto;padding:clamp(20px,4vw,40px) max(4vw,16px) 60px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:20px}
+h1{font:700 clamp(40px,6vw,54px)/1 'Caveat',cursive;margin:0}
+nav{display:flex;gap:8px;flex-wrap:wrap}
+.chip,.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--ink);font:700 15px 'Nunito',system-ui,sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#2b0f0a}
+.btn.danger{color:#ffb2a6}
+.btn:disabled{opacity:.5;cursor:default}
+:is(.chip,.btn,input,select,textarea,summary):focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+section{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:clamp(16px,3vw,24px);margin-bottom:18px}
+h2{font:800 20px/1.2 'Nunito',system-ui,sans-serif;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 16px;font-size:15px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;color:var(--mute);font-weight:700;font-size:13px;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.c,th.c{text-align:center}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--acc)}
+input.fld,select.fld{min-height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px;font:16px 'Nunito',system-ui,sans-serif;width:100%}
+.add{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto auto auto;gap:10px;align-items:center;margin-top:14px}
+.add label{display:flex;gap:6px;align-items:center;font-size:14px;white-space:nowrap}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:800}
+.pill.ok{background:rgba(155,227,168,.15);color:var(--ok)}.pill.no{background:rgba(255,122,102,.15);color:#ffb2a6}
+ol{padding-left:22px;margin:0 0 14px}ol li{margin-bottom:10px}
+code{background:var(--bg3);padding:1px 6px;border-radius:6px;font-size:14px;overflow-wrap:anywhere}
+pre{background:#0f0f12;border:1px solid var(--line);border-radius:12px;padding:12px;max-height:240px;overflow:auto;font-size:12.5px;line-height:1.45;margin:8px 0 0}
+.tok{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.tok code{font-size:16px;letter-spacing:1px}
+.urlrow{display:flex;gap:8px;flex-wrap:wrap}.urlrow input{flex:1 1 320px}
+.meter{height:12px;background:var(--bg3);border-radius:6px;overflow:hidden;display:flex}
+.meter i{display:block;height:100%}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--mute);margin-top:8px}
+.legend b{color:var(--ink);font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.msg{min-height:22px;margin:10px 0 0;font-weight:700;font-size:14px}
+.msg.err{color:#ffb2a6}.msg.ok{color:var(--ok)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:700;z-index:80}
+@media(max-width:700px){.add{grid-template-columns:1fr 1fr}.add .fld{grid-column:span 2}table .em{font-size:13px;word-break:break-all}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Удирдлага</h1>
+    <nav><a class="chip" href="/">Цомог</a><a class="chip" href="/share/">Зураг дамжуулах</a><button class="chip" id="out">Гарах</button></nav>
+  </header>
+
+  <section>
+    <h2>Хэн нэвтэрч болох вэ</h2>
+    <p class="sub">Энд нэмсэн имэйл рүү нэвтрэх код очно. «Гэр бүл» цомгийг харж сэтгэгдэл бичнэ, «Хамт олон» зураг дамжуулах хуудсанд орж файл илгээж, татна.</p>
+    <table>
+      <thead><tr><th>Нэр</th><th>Имэйл</th><th class="c">Гэр бүл</th><th class="c">Хамт олон</th><th></th></tr></thead>
+      <tbody id="users"></tbody>
+    </table>
+    <form id="addF" class="add">
+      <input id="nName" class="fld" maxlength="40" placeholder="Нэр, ж: Ээж">
+      <input id="nEmail" class="fld" type="email" required placeholder="имэйл хаяг">
+      <label><input type="checkbox" id="nFam" checked>Гэр бүл</label>
+      <label><input type="checkbox" id="nCow">Хамт олон</label>
+      <button class="btn pri" type="submit">Нэмэх</button>
+    </form>
+    <p id="uMsg" class="msg"></p>
+  </section>
+
+  <section>
+    <h2>Google Sheets ба Gmail <span id="scriptPill" class="pill no">Холбогдоогүй</span></h2>
+    <p class="sub">Нэвтрэх кодыг таны Gmail-ээс илгээж, шинэ цомог, зураг, сэтгэгдэл, илгээмжийг Google Sheets-д мөр болгон бичнэ. Нэг удаа тохируулна.</p>
+    <p id="sheetLine" class="sub" hidden>Бүртгэлийн хүснэгт: <a id="sheetLink" href="#" target="_blank" rel="noopener" style="color:#ff9b8a">Google Sheets-д нээх</a></p>
+    <ol>
+      <li><a href="https://sheets.new" target="_blank" rel="noopener" style="color:#ff9b8a">sheets.new</a> дээр дарж шинэ хүснэгт нээгээд нэр өг, ж: «Гэр бүлийн цомог — бүртгэл».</li>
+      <li>Цэснээс <b>Extensions → Apps Script</b>. Тэнд байгаа кодыг бүгдийг нь устгаад доорх кодыг хуулж тавиад хадгал (Ctrl+S).
+        <div class="tok">Таны түлхүүр: <code id="token">…</code><button class="btn" id="copy" type="button">Кодыг хуулах</button></div>
+        <details><summary style="cursor:pointer;color:var(--mute)">Кодыг харах</summary><pre id="gs"></pre></details>
+      </li>
+      <li>Дээд талын функцийн сонголтоос <code>setup</code>-ийг сонгоод <b>Run</b> дар. Google зөвшөөрөл асуухад өөрийн бүртгэлээ сонгоод «Advanced → Go to … (unsafe)» → «Allow».</li>
+      <li><b>Deploy → New deployment</b> → төрөл: <b>Web app</b>. Execute as: <b>Me</b>, Who has access: <b>Anyone</b> → Deploy.</li>
+      <li>Гарсан <b>Web app URL</b>-ийг (…/exec гэж төгсдөг) доор тавиад «Холбох» дар.</li>
+    </ol>
+    <div class="urlrow"><input id="url" class="fld" placeholder="https://script.google.com/macros/s/…/exec"><button class="btn pri" id="saveUrl" type="button">Холбох</button><button class="btn" id="test" type="button">Шалгах</button></div>
+    <p id="sMsg" class="msg"></p>
+  </section>
+
+  <section>
+    <h2>Хадгалах зай</h2>
+    <p class="sub">Зургууд Cloudflare KV-д хадгалагдана. Үнэгүй багц 1 ГБ хүртэл, өдөрт 1000 удаа хадгалах боломжтой.</p>
+    <div class="meter" id="meter"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+<script type="text/plain" id="gsSrc">// Гэр бүлийн цомог — Google Sheets ба Gmail холболт
+// Энэ кодыг Google Sheets хүснэгтийнхээ Extensions → Apps Script хэсэгт хуулж тавина.
+// TOKEN-ийг сайтын «Удирдлага» хуудсанд харагдах түлхүүрээр солино.
+
+const TOKEN = 'ЭНД_ТҮЛХҮҮРЭЭ_ТАВЬ';
+
+const SHEETS = {
+  'Цомог': ['Огноо', 'Цомог', 'Хэн харах', 'Линк'],
+  'Зураг': ['Нэмсэн', 'Цомог', 'Тайлбар', 'Зургийн огноо', 'Зураг', 'Цомгийн линк'],
+  'Сэтгэгдэл': ['Огноо', 'Хэн', 'Сэтгэгдэл', 'Цомог', 'Линк'],
+  'Илгээмж': ['Огноо', 'Хэн', 'Тэмдэглэл', 'Файлын тоо', 'Нийт МБ', 'Линк']
+};
+
+function doPost(e) {
+  let body;
+  try { body = JSON.parse(e.postData.contents); } catch (err) { return out({ ok: false, error: 'bad_json' }); }
+  if (!body || body.token !== TOKEN) return out({ ok: false, error: 'bad_token' });
+  if (body.action === 'ping') return out({ ok: true, sheet: SpreadsheetApp.getActiveSpreadsheet().getUrl(), mailLeft: MailApp.getRemainingDailyQuota() });
+  if (body.action === 'mail') {
+    MailApp.sendEmail({ to: String(body.to), subject: String(body.subject).slice(0, 200), htmlBody: String(body.html), name: 'Гэр бүлийн цомог' });
+    return out({ ok: true });
+  }
+  if (body.action === 'log') {
+    if (!SHEETS[body.sheet] || !Array.isArray(body.row)) return out({ ok: false, error: 'bad_sheet' });
+    sheet(body.sheet).appendRow(body.row.slice(0, 10).map(v => typeof v === 'string' && /^[=+\-@]/.test(v) ? "'" + v : v));
+    return out({ ok: true });
+  }
+  return out({ ok: false, error: 'bad_action' });
+}
+
+function sheet(name) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(name);
+  if (!sh) {
+    sh = ss.insertSheet(name);
+    const head = SHEETS[name];
+    sh.appendRow(head);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, head.length).setFontWeight('bold').setBackground('#f3f3f3');
+  }
+  return sh;
+}
+
+function out(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Эхний удаа зөвшөөрөл өгөхөд энийг сонгоод «Run» дарна.
+function setup() {
+  Object.keys(SHEETS).forEach(sheet);
+  Logger.log('Бэлэн. Имэйл илгээх үлдэгдэл: ' + MailApp.getRemainingDailyQuota());
+}
+</script>
+<script>
+{
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const MB = b => (b / 1048576).toFixed(b > 104857600 ? 0 : 1).replace('.', ',') + ' МБ';
+const toast = m => { $('toast').textContent = m; $('toast').hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { $('toast').hidden = true; }, 3200); };
+const ERR = { bad_email: 'Имэйл хаяг буруу байна.', is_owner: 'Энэ бол таны өөрийн хаяг.', no_roles: '«Гэр бүл» эсвэл «Хамт олон»-ы аль нэгийг сонгоно уу.', bad_url: 'URL буруу байна. …/exec гэж төгссөн Web app URL байх ёстой.' };
+let state = null;
+async function call(path, body) {
+  const r = await fetch('/api/admin/' + path, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), credentials: 'same-origin' } : { credentials: 'same-origin' });
+  if (r.status === 401) { location.href = '/login?next=/admin'; return {}; }
+  return r.json().catch(() => ({ error: 'net' }));
+}
+function gsCode() { return $('gsSrc').textContent.replace("'ЭНД_ТҮЛХҮҮРЭЭ_ТАВЬ'", `'${state ? state.script.token : ''}'`).trim(); }
+function render() {
+  const s = state;
+  $('users').innerHTML = `<tr><td><input class="fld" id="ownerName" maxlength="40" value="${esc(s.owner.name)}" aria-label="Таны нэр"></td><td class="em">${esc(s.owner.email)}</td><td class="c" colspan="2">Эзэн · бүх эрхтэй</td><td></td></tr>` +
+    s.users.map(u => { const r = String(u.roles).split(','); return `<tr data-email="${esc(u.email)}"><td><input class="fld" data-name value="${esc(u.name)}" maxlength="40" aria-label="Нэр"></td><td class="em">${esc(u.email)}</td><td class="c"><input type="checkbox" data-role="family" ${r.includes('family') ? 'checked' : ''} aria-label="Гэр бүл"></td><td class="c"><input type="checkbox" data-role="coworker" ${r.includes('coworker') ? 'checked' : ''} aria-label="Хамт олон"></td><td class="c"><button class="btn danger" data-del>Хасах</button></td></tr>`; }).join('');
+  const ok = !!s.script.url;
+  $('scriptPill').className = 'pill ' + (ok ? 'ok' : 'no'); $('scriptPill').textContent = ok ? 'Холбогдсон' : 'Холбогдоогүй';
+  $('token').textContent = s.script.token; $('gs').textContent = gsCode();
+  if (document.activeElement !== $('url')) $('url').value = s.script.url || '';
+  $('sheetLine').hidden = !s.script.sheet; if (s.script.sheet && /^https:\/\/docs\.google\.com\//.test(s.script.sheet)) $('sheetLink').href = s.script.sheet;
+  const u = s.usage, q = u.quota;
+  $('meter').innerHTML = `<i style="width:${Math.min(100, u.album / q * 100)}%;background:#ff7a66"></i><i style="width:${Math.min(100, u.share / q * 100)}%;background:#6aa8ff"></i>`;
+  $('legend').innerHTML = `<span><span class="dot" style="background:#ff7a66"></span>Цомог <b>${MB(u.album)}</b></span><span><span class="dot" style="background:#6aa8ff"></span>Зураг дамжуулах <b>${MB(u.share)}</b></span><span>Нийт <b>${MB(u.bytes)}</b> / ${MB(q)}</span><span>Файл <b>${u.files}</b> / ${u.quotaFiles}</span>`;
+}
+async function load() { const s = await call('state'); if (s && !s.error) { state = s; render(); } }
+$('users').addEventListener('change', async e => {
+  if (e.target.id === 'ownerName') { await call('owner-name', { name: e.target.value }); toast('Нэрийг хадгаллаа'); return; }
+  const tr = e.target.closest('tr[data-email]'); if (!tr) return;
+  const roles = [...tr.querySelectorAll('[data-role]:checked')].map(x => x.dataset.role);
+  if (!roles.length) { $('uMsg').className = 'msg err'; $('uMsg').textContent = ERR.no_roles; e.target.checked = true; return; }
+  const j = await call('user', { email: tr.dataset.email, name: tr.querySelector('[data-name]').value, roles });
+  $('uMsg').className = 'msg ' + (j.error ? 'err' : 'ok'); $('uMsg').textContent = j.error ? (ERR[j.error] || 'Хадгалж чадсангүй') : 'Хадгаллаа';
+});
+$('users').addEventListener('click', async e => {
+  const b = e.target.closest('[data-del]'); if (!b) return;
+  const tr = b.closest('tr');
+  if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Итгэлтэй юу?'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Хасах'; }, 3000); return; }
+  await call('user-delete', { email: tr.dataset.email }); toast('Хаслаа'); load();
+});
+$('addF').addEventListener('submit', async e => {
+  e.preventDefault();
+  const roles = [$('nFam').checked && 'family', $('nCow').checked && 'coworker'].filter(Boolean);
+  const j = await call('user', { email: $('nEmail').value, name: $('nName').value, roles });
+  $('uMsg').className = 'msg ' + (j.error ? 'err' : 'ok');
+  $('uMsg').textContent = j.error ? (ERR[j.error] || 'Нэмж чадсангүй') : 'Нэмлээ. Одоо тэр хүн имэйлээрээ нэвтэрч болно.';
+  if (!j.error) { $('nEmail').value = ''; $('nName').value = ''; load(); }
+});
+const showTest = j => {
+  $('sMsg').className = 'msg ' + (j.ok ? 'ok' : 'err');
+  const e = j.test && j.test.error;
+  $('sMsg').textContent = j.ok ? `Холбогдлоо! Өнөөдөр ${j.test.mailLeft ?? '?'} имэйл илгээх эрх үлдсэн.` : j.error ? (ERR[j.error] || 'Хадгалж чадсангүй') : e === 'bad_token' ? 'Түлхүүр таарахгүй байна. Apps Script дээрх TOKEN-ийг шалгаад дахин Deploy хий.' : 'Холбогдож чадсангүй. URL, «Who has access: Anyone» тохиргоог шалгаарай.';
+};
+$('saveUrl').addEventListener('click', async () => { $('saveUrl').disabled = true; $('sMsg').className = 'msg'; $('sMsg').textContent = 'Шалгаж байна…'; const j = await call('script', { url: $('url').value }); $('saveUrl').disabled = false; showTest(j); load(); });
+$('test').addEventListener('click', async () => { $('sMsg').className = 'msg'; $('sMsg').textContent = 'Шалгаж байна…'; showTest(await call('test', {})); load(); });
+$('copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(gsCode()); toast('Кодыг хууллаа'); } catch (e) { toast('Хуулж чадсангүй, «Кодыг харах»-аас гараар хуулна уу'); } });
+$('out').addEventListener('click', async () => { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }); location.href = '/login'; });
+load();
+}
+</script>
+</body>
+</html>

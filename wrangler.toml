@@ -1,0 +1,24 @@
+name = "family-album"
+main = "src/worker.js"
+compatibility_date = "2025-11-01"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[vars]
+SOURCE_URL = "https://raw.githubusercontent.com/eenjii87-alt/family-album/main/public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "family-album"
+database_id = "e43276ec-bb65-452d-a497-9f81b2528c4f"
+
+[[kv_namespaces]]
+binding = "PHOTOS"
+id = "8ce8562a0cf5405ea1658d2cd3bda699"
+
+# Нууц утгууд (репод бичихгүй, Cloudflare дээр аль хэдийн тохируулсан):
+#   OWNER_EMAIL — эзний имэйл
+#   PEPPER      — нэвтрэх кодыг хамгаалах санамсаргүй утга
+#   GITHUB_TOKEN (заавал биш) — репог Private болговол хуудсыг татахад хэрэгтэй

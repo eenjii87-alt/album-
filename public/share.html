@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/shim.js"></script>
+<title>Зураг дамжуулах</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: practical, calm work tool for a small team
+   IDEA: a photo-lab envelope: each send is a kraft envelope with a stamped note; the files inside sit on a contact sheet with exact size marks
+   PICTURE: the big send envelope (drop zone) at the top, then the envelopes, newest first
+   COLOUR+TYPE: paper white / night graphite, kraft #d8b98d, ink #1d1f23, stamp blue #2a5bd7; Manrope throughout
+   LAYOUT: title, send envelope, list of envelopes with contact sheets; one column up to 1100px */
+:root{color-scheme:light dark;--bg:light-dark(#f7f6f2,#151619);--card:light-dark(#ffffff,#1e2024);--ink:light-dark(#1d1f23,#ecebe6);--mute:light-dark(#62656b,#a3a6ab);--line:light-dark(#e2dfd6,#30333a);--kraft:light-dark(#d8b98d,#6e5636);--kraftInk:light-dark(#3b2a14,#f3e6d2);--blue:light-dark(#2a5bd7,#7fa4ff);--sheet:#1b1c1f}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 'Manrope',system-ui,sans-serif;overflow-x:clip}
+[hidden]{display:none!important}
+button,input{font:inherit;color:inherit}
+svg{display:block}
+.wrap{max-width:1100px;margin:0 auto;padding:0 max(4vw,16px)}
+.top{padding-top:clamp(24px,4vw,48px);padding-bottom:8px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.05;font-weight:800;margin:0;letter-spacing:-.02em;outline:none;border-radius:8px;text-wrap:balance}
+h1[contenteditable]:not([contenteditable=false]):is(:hover,:focus){box-shadow:0 0 0 2px var(--line)}
+.lead{color:var(--mute);margin:8px 0 0;max-width:60ch}
+.stamp{display:inline-flex;align-items:center;gap:6px;margin-top:14px;border:2px solid var(--blue);color:var(--blue);font-weight:800;font-size:14px;padding:4px 10px;border-radius:6px;transform:rotate(-2deg)}
+.stamp svg{width:16px;height:16px}
+.btn{font:700 16px 'Manrope',sans-serif;min-height:46px;padding:0 18px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.btn svg{width:19px;height:19px;flex:none}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:light-dark(#fff,#0c1630)}
+.btn.sm{min-height:44px;padding:0 14px;font-size:15px}
+.btn.danger{color:light-dark(#b3261e,#ff9d94)}
+.btn:disabled{opacity:.5;cursor:default}
+.ic{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:10px;display:grid;place-items:center;cursor:pointer;color:#ecebe6;background:rgba(255,255,255,.08);flex:none}
+.ic:hover{background:rgba(255,255,255,.16)}
+.ic svg{width:20px;height:20px}
+:is(.btn,.ic,.thumb):focus-visible,.fld:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.fld{font:16px 'Manrope',sans-serif;min-height:46px;width:100%;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);padding:0 14px}
+.status{color:var(--mute);margin:12px 0}
+.status:empty{display:none}
+
+.env{position:relative;margin:26px 0 10px;background:var(--kraft);color:var(--kraftInk);border-radius:14px;padding:clamp(16px,3vw,28px);box-shadow:0 14px 30px rgba(0,0,0,.12)}
+.env::before{content:"";position:absolute;left:0;right:0;top:0;height:46px;background:linear-gradient(170deg,rgba(0,0,0,.08) 50%,transparent 50%),linear-gradient(190deg,rgba(0,0,0,.08) 50%,transparent 50%);background-size:50.2% 100%;background-repeat:no-repeat;background-position:left,right;border-radius:14px 14px 0 0;pointer-events:none}
+.drop{position:relative;border:2.5px dashed rgba(59,42,20,.45);border-radius:12px;padding:26px 16px;text-align:center;cursor:pointer;background:rgba(255,255,255,.18);transition:background .2s}
+:root[data-theme=dark] .drop,.drop{border-color:color-mix(in srgb,var(--kraftInk) 45%,transparent)}
+.drop.over{background:rgba(255,255,255,.42)}
+.drop svg{width:40px;height:40px;margin:0 auto 6px}
+.drop b{display:block;font-size:19px;font-weight:800}
+.drop span{font-size:14px;opacity:.8}
+.picked{display:grid;gap:6px;margin:14px 0 0;padding:0;list-style:none}
+.picked li{display:flex;justify-content:space-between;gap:12px;background:rgba(255,255,255,.32);border-radius:8px;padding:6px 10px;font-size:14px}
+.picked li span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.picked li span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+.sendrow{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.sendrow .fld{flex:1 1 260px;background:rgba(255,255,255,.55);border-color:transparent;color:#1d1f23}
+:root .sendrow .fld::placeholder{color:#6b5a43}
+.bar{height:6px;background:rgba(0,0,0,.15);border-radius:3px;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;width:0;background:var(--blue);transition:width .3s}
+.prog{margin-top:12px;font-size:14px;font-weight:700}
+
+.list h2{font-size:22px;font-weight:800;margin:34px 0 12px}
+.batch{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:22px}
+.bhead{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:14px 16px;background:var(--kraft);color:var(--kraftInk)}
+.bhead .bn{flex:1 1 240px}
+.bhead h3{margin:0;font-size:19px;font-weight:800;overflow-wrap:anywhere}
+.bhead p{margin:2px 0 0;font-size:14px;opacity:.85;font-variant-numeric:tabular-nums}
+.bhead .btn{background:rgba(255,255,255,.55);border-color:transparent;color:#1d1f23}
+.sheet{background:var(--sheet);padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px;background-image:radial-gradient(circle,#2c2d31 2px,transparent 2.5px);background-size:22px 22px;background-position:6px 4px}
+.frame{display:grid;gap:6px;color:#ecebe6;font-size:13px}
+.thumb{all:unset;cursor:pointer;display:grid;place-items:center;aspect-ratio:3/2;background:#2a2b2f;overflow:hidden;border:3px solid #f2f0ea}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb svg{width:40px;height:40px;color:#c9c7c0}
+.fmeta{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.fname{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fsize{color:#a3a6ab;font-variant-numeric:tabular-nums}
+.conv{color:#ffcf7a}
+.empty{text-align:center;color:var(--mute);padding:30px 0 50px}
+
+.pv{position:fixed;inset:0;z-index:40;background:rgba(12,12,14,.96);display:grid;grid-template-rows:auto minmax(0,1fr) auto;color:#ecebe6}
+.pvtop{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px max(3vw,12px)}
+.pvtop span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pvbody{position:relative;min-height:0}
+.pvbody>*{position:absolute;inset:8px 3vw;width:calc(100% - 6vw);height:calc(100% - 16px);object-fit:contain}
+.pvbody .noprev{display:grid;place-items:center;text-align:center;color:#a3a6ab}
+.pvfoot{display:flex;justify-content:center;gap:10px;padding:12px 16px calc(16px + env(safe-area-inset-bottom))}
+.pvfoot .btn{background:#2a2b2f;border-color:#3a3b40;color:#ecebe6}
+.pvfoot .btn.pri{background:#7fa4ff;border-color:#7fa4ff;color:#0c1630}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(10,9,12,.6);display:grid;place-items:center;padding:16px}
+.card{width:min(460px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.card h3{margin:0 0 6px;font-size:22px;font-weight:800}
+.card p{margin:0;color:var(--mute)}
+.row{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:700;z-index:80;max-width:calc(100vw - 32px)}
+.foot{color:var(--mute);font-size:14px;text-align:center;padding:10px 16px 40px}
+@media(max-width:600px){.sheet{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px}.bhead .bn{flex-basis:100%}.bhead .btn{flex:1 0 auto}.sendrow .btn{flex:1}.fmeta .ic{width:40px;height:40px}}
+@media(prefers-reduced-motion:reduce){.drop,.bar i{transition:none}}
+</style>
+</head>
+<body>
+<header class="wrap top">
+  <h1 id="title">Хамт олны зураг дамжуулах</h1>
+  <p class="lead">Энд оруулсан зураг, видео эх чанараараа, шахагдалгүй хадгалагдана. Татаж авахад анх илгээсэнтэй яг адилхан файл гарна.</p>
+  <span class="stamp" data-i="shield">Эх чанараар · шахалтгүй</span>
+</header>
+
+<main class="wrap">
+  <section id="send" class="env" hidden>
+    <div id="drop" class="drop" role="button" tabindex="0" aria-label="Файл сонгох">
+      <span data-i="up"></span>
+      <b>Файлаа энд чирж тавь, эсвэл дарж сонго</b>
+      <span>Зураг (JPG, PNG, HEIC, WEBP, GIF), видео (MP4, WEBM), PDF · нэг файл 20 МБ хүртэл</span>
+    </div>
+    <ul id="picked" class="picked"></ul>
+    <div class="sendrow">
+      <input id="note" class="fld" maxlength="120" placeholder="Юуны зураг вэ? Жишээ нь: Шинэ барааны зураг">
+      <button id="go" class="btn pri" data-i="send" disabled>Илгээх</button>
+    </div>
+    <div id="progWrap" hidden><div id="prog" class="prog"></div><div class="bar"><i id="bar"></i></div></div>
+    <input id="file" type="file" multiple accept="image/*,video/mp4,video/webm,application/pdf,.heic,.heif" hidden>
+  </section>
+
+  <section class="list">
+    <h2>Илгээсэн зургууд</h2>
+    <p id="status" class="status" role="status">Нээж байна…</p>
+    <div id="batches"></div>
+    <div id="empty" class="empty" hidden>Одоохондоо илгээсэн зураг алга.</div>
+  </section>
+</main>
+<footer class="foot">Энэ хуудсыг зөвхөн таны зөвшөөрсөн имэйлтэй хүмүүс харна.</footer>
+
+<div id="pv" class="pv" hidden role="dialog" aria-modal="true" aria-label="Файл үзэх">
+  <div class="pvtop"><span id="pvName"></span><button id="pvClose" class="ic" aria-label="Хаах" data-i="x"></button></div>
+  <div id="pvBody" class="pvbody"></div>
+  <div class="pvfoot"><span id="pvInfo" style="align-self:center;color:#a3a6ab;font-size:14px"></span><button id="pvDl" class="btn pri" data-i="dl">Татах</button></div>
+</div>
+
+<div id="confirm" class="modal" hidden>
+  <div class="card" role="alertdialog" aria-modal="true" aria-labelledby="cH">
+    <h3 id="cH">Энэ илгээмжийг устгах уу?</h3><p>Доторх бүх файл бүр мөсөн устна.</p>
+    <div class="row"><button id="cNo" class="btn sm">Болих</button><button id="cYes" class="btn sm pri">Устгах</button></div>
+  </div>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+{
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-5);
+const okAsset = a => typeof a === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(a);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const MAX = 20 * 1024 * 1024;
+const DEF_TITLE = 'Хамт олны зураг дамжуулах';
+const ICONS = {
+  x: 'M6 6l12 12M18 6L6 18', dl: 'M12 4v11m-5-5l5 5 5-5M5 20h14', up: 'M12 16V4m-5 5 5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3',
+  send: 'M4 12 20 4l-4 16-4-7z', trash: 'M4 7h16M9 7V4h6v3m-8 0l1 13h8l1-13', zip: '<path d="M6 3h9l4 4v14H6z"/><path d="M11 3v2h2v2h-2v2h2v2h-2v3"/>',
+  shield: '<path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"/><path d="m9 12 2 2 4-4"/>',
+  film: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4M3 15h4M17 9h4M17 15h4"/>', doc: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'
+};
+const I = n => { const d = ICONS[n] || ''; return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d.startsWith('<') ? d : `<path d="${d}"/>`}</svg>`; };
+for (const n of document.querySelectorAll('[data-i]')) n.insertAdjacentHTML('afterbegin', I(n.dataset.i));
+const el = {};
+for (const id of ['title','send','drop','picked','note','go','progWrap','prog','bar','file','status','batches','empty','pv','pvName','pvBody','pvInfo','pvDl','pvClose','confirm','cYes','cNo','toast']) el[id] = $(id);
+
+let db = null, assets = null, dl = null, user = null, canEdit = false, uid = '', title = '';
+let batches = [], loaded = false, picked = [], sending = false, pvFile = null, askDone = null;
+
+const toast = m => { el.toast.textContent = m; el.toast.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.toast.hidden = true; }, 3800); };
+const size = b => b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' МБ' : Math.max(1, Math.round(b / 1024)) + ' КБ';
+const pad = n => String(n).padStart(2, '0');
+const when = ms => { const d = new Date(ms); return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}, ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const safeName = n => String(n || 'file').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').trim().slice(0, 120) || 'file';
+const TYPES = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', mp4: 'video/mp4', webm: 'video/webm', pdf: 'application/pdf' };
+const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'video/mp4': 'mp4', 'video/webm': 'webm', 'application/pdf': 'pdf' };
+const OK = /^(image\/(jpeg|png|webp|gif)|video\/(mp4|webm)|application\/pdf)$/;
+const ERR = { too_large: '20 МБ-аас том', unsupported_type: 'энэ төрлийг хадгалах боломжгүй', quota_or_state: 'хадгалах зай дүүрсэн', quota_exceeded: 'хадгалах зай дүүрсэн', rate_limited: 'хэт олон удаа илгээлээ' };
+async function retry(fn) { try { return await fn(); } catch (e) { if (e && (e.code === 'store_unavailable' || e.code === 'unavailable')) { await wait(700 + Math.random() * 700); return fn(); } throw e; } }
+
+function cleanFile(f) {
+  if (!f || !okAsset(f.a)) return null;
+  const type = OK.test(f.type) ? f.type : 'image/jpeg';
+  return { a: f.a, name: safeName(f.name), size: Math.max(0, +f.size || 0), type, w: Math.max(0, f.w | 0), h: Math.max(0, f.h | 0), conv: !!f.conv };
+}
+function cleanBatch(d) {
+  const x = d.data() || {};
+  return { id: d.id, note: String(x.note || '').slice(0, 120), at: +x.at || 0, files: (Array.isArray(x.files) ? x.files : []).map(cleanFile).filter(Boolean) };
+}
+
+/* ---------- list ---------- */
+function fileHTML(f, bi, fi) {
+  const img = f.type.startsWith('image/');
+  const pic = img ? `<img src="/_blob/${esc(f.a)}" alt="${esc(f.name)}" loading="lazy" decoding="async">` : I(f.type === 'application/pdf' ? 'doc' : 'film');
+  const dims = f.w && f.h ? ` · ${f.w}×${f.h}` : '';
+  return `<div class="frame"><button class="thumb" data-b="${bi}" data-f="${fi}" aria-label="${esc(f.name)} харах">${pic}</button><div class="fmeta"><div style="min-width:0"><div class="fname" title="${esc(f.name)}">${esc(f.name)}</div><div class="fsize">${size(f.size)}${dims}${f.conv ? ' · <span class="conv">JPG болгосон</span>' : ''}</div></div>${dl ? `<button class="ic" data-dl="${bi}:${fi}" aria-label="${esc(f.name)} татах">${I('dl')}</button>` : ''}</div></div>`;
+}
+function render() {
+  if (document.activeElement !== el.title) el.title.textContent = title || DEF_TITLE;
+  el.batches.innerHTML = batches.map((b, bi) => {
+    const total = b.files.reduce((s, f) => s + f.size, 0);
+    return `<article class="batch"><div class="bhead"><div class="bn"><h3>${esc(b.note || 'Илгээмж')}</h3><p>${when(b.at)} · ${b.files.length} файл · ${size(total)}</p></div>${dl && b.files.length ? `<button class="btn sm" data-zip="${bi}">${I('zip')}Бүгдийг татах</button>` : ''}${canEdit ? `<button class="btn sm danger" data-del="${bi}">${I('trash')}Устгах</button>` : ''}</div><div class="sheet">${b.files.map((f, fi) => fileHTML(f, bi, fi)).join('')}</div></article>`;
+  }).join('');
+  el.empty.hidden = !(loaded && !batches.length);
+}
+
+/* ---------- send ---------- */
+const extOf = n => (String(n).split('.').pop() || '').toLowerCase();
+function renderPicked() {
+  el.picked.innerHTML = picked.slice(0, 8).map(f => `<li><span>${esc(f.name)}</span><span>${size(f.size)}</span></li>`).join('') + (picked.length > 8 ? `<li><span>…бас ${picked.length - 8} файл</span><span></span></li>` : '');
+  el.go.disabled = !picked.length || sending;
+  el.go.lastChild.textContent = picked.length ? `${picked.length} файл илгээх` : 'Илгээх';
+}
+function pick(files) {
+  if (sending) return;
+  picked = picked.concat([...files].filter(f => OK.test(f.type || TYPES[extOf(f.name)] || '') || /^image\//.test(f.type) || /^(heic|heif)$/.test(extOf(f.name))));
+  if (files.length && !picked.length) toast('Зураг, видео эсвэл PDF файл сонгоно уу');
+  renderPicked();
+}
+async function prep(f) {
+  let type = OK.test(f.type) ? f.type : (TYPES[extOf(f.name)] || f.type || ''), blob = f, name = safeName(f.name), w = 0, h = 0, conv = false;
+  const isImg = /^image\//.test(type) || /^(heic|heif)$/.test(extOf(f.name));
+  if (isImg) {
+    let bm = null;
+    try { bm = await createImageBitmap(f, { imageOrientation: 'from-image' }); w = bm.width; h = bm.height; } catch (e) {}
+    if (!OK.test(type) || f.size > MAX) {
+      if (!bm) throw { code: 'unsupported_type' };
+      const k = Math.min(1, Math.sqrt(16e6 / (w * h)));
+      const cv = document.createElement('canvas'); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+      const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(bm, 0, 0, cv.width, cv.height);
+      for (const q of [.95, .9, .85]) { blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', q)); if (blob && blob.size <= MAX) break; }
+      if (!blob) throw { code: 'unsupported_type' };
+      w = cv.width; h = cv.height; type = 'image/jpeg'; conv = true; name = name.replace(/\.[^.]+$/, '') + '.jpg';
+    }
+    if (bm && bm.close) bm.close();
+  }
+  if (!OK.test(type)) throw { code: 'unsupported_type' };
+  if (blob.size > MAX) throw { code: 'too_large' };
+  return { blob, type, name, w, h, conv };
+}
+el.go.addEventListener('click', async () => {
+  if (!picked.length || sending || !assets || !db) return;
+  sending = true; el.go.disabled = true; el.progWrap.hidden = false;
+  const list = picked, files = [], fails = [];
+  for (let k = 0; k < list.length; k++) {
+    el.prog.textContent = `Илгээж байна… ${k + 1} / ${list.length}`;
+    el.bar.style.width = `${(k / list.length) * 100}%`;
+    try {
+      const p = await prep(list[k]);
+      const r = await retry(() => assets.upload(p.blob, { type: p.type }));
+      files.push({ a: r.id, name: p.name, size: r.sizeBytes || p.blob.size, type: r.contentType || p.type, w: p.w, h: p.h, conv: p.conv });
+    } catch (e) {
+      fails.push(`${list[k].name}: ${ERR[e && e.code] || 'алдаа гарлаа'}`);
+      if (e && (e.code === 'quota_or_state' || e.code === 'quota_exceeded')) break;
+    }
+  }
+  el.bar.style.width = '100%';
+  if (files.length) {
+    try {
+      const ref = db.collection('batches').doc(rid());
+      await retry(() => ref.set({ note: el.note.value.replace(/\s+/g, ' ').trim().slice(0, 120), at: Date.now(), by: uid, files }));
+      picked = []; el.note.value = '';
+    } catch (e) { fails.push('Жагсаалтад нэмж чадсангүй'); for (const f of files) assets.delete(f.a).catch(() => {}); }
+  }
+  sending = false; el.progWrap.hidden = true; renderPicked();
+  toast(fails.length ? `${files.length} файл илгээгдлээ. Илгээгдээгүй: ${fails.slice(0, 2).join('; ')}${fails.length > 2 ? '…' : ''}` : `${files.length} файл илгээгдлээ`);
+});
+el.drop.addEventListener('click', () => el.file.click());
+el.drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.file.click(); } });
+el.file.addEventListener('change', () => { pick(el.file.files); el.file.value = ''; });
+let dz = 0;
+const isFiles = e => !!assets && !!e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+addEventListener('dragenter', e => { if (!isFiles(e)) return; e.preventDefault(); dz++; el.drop.classList.add('over'); });
+addEventListener('dragover', e => { if (isFiles(e)) e.preventDefault(); });
+addEventListener('dragleave', () => { dz = Math.max(0, dz - 1); if (!dz) el.drop.classList.remove('over'); });
+addEventListener('drop', e => { if (!isFiles(e)) return; e.preventDefault(); dz = 0; el.drop.classList.remove('over'); pick(e.dataTransfer.files); });
+
+/* ---------- download, zip, preview, delete ---------- */
+async function getBlob(f) { const r = await fetch('/_blob/' + f.a); if (!r.ok) throw new Error('fetch'); return r.blob(); }
+const fname = f => { const e = EXT[f.type] || 'bin'; return /\.[a-z0-9]{2,5}$/i.test(f.name) ? f.name : `${f.name}.${e}`; };
+const dlErr = e => { if (!e || e.code !== 'declined') toast(e && e.code === 'host_unavailable' ? 'Энд татах боломжгүй, хөтөч эсвэл компьютер дээрээс нээнэ үү' : 'Татаж чадсангүй'); };
+async function saveFile(f, btn) {
+  if (!dl) return; if (btn) btn.disabled = true;
+  try { await dl.save({ filename: fname(f), data: await getBlob(f) }); } catch (e) { dlErr(e); }
+  if (btn) btn.disabled = false;
+}
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+async function saveZip(b, btn) {
+  if (!dl) return; btn.disabled = true; const label = btn.lastChild.textContent;
+  try {
+    if (!window.JSZip) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    const zip = new window.JSZip(), used = new Set();
+    for (let i = 0; i < b.files.length; i++) {
+      btn.lastChild.textContent = `Бэлдэж байна ${i + 1}/${b.files.length}`;
+      const f = b.files[i]; let n = fname(f), k = 1;
+      while (used.has(n.toLowerCase())) n = fname(f).replace(/(\.[^.]+)$/, `-${++k}$1`);
+      used.add(n.toLowerCase()); zip.file(n, await getBlob(f));
+    }
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+    btn.lastChild.textContent = label;
+    await dl.save({ filename: safeName(b.note || 'zurag-' + when(b.at).replace(/[.,: ]+/g, '-')) + '.zip', data: blob });
+  } catch (e) { dlErr(e); }
+  btn.lastChild.textContent = label; btn.disabled = false;
+}
+function openPv(f) {
+  pvFile = f; el.pvName.textContent = f.name;
+  el.pvInfo.textContent = `${size(f.size)}${f.w && f.h ? ` · ${f.w}×${f.h}` : ''}`;
+  const src = '/_blob/' + esc(f.a);
+  el.pvBody.innerHTML = f.type.startsWith('image/') ? `<img src="${src}" alt="${esc(f.name)}">` : f.type.startsWith('video/') ? `<video src="${src}" controls playsinline></video>` : `<div class="noprev">PDF файлыг татаж аваад нээнэ үү.</div>`;
+  el.pvDl.hidden = !dl; el.pv.hidden = false; document.body.style.overflow = 'hidden'; el.pvClose.focus();
+}
+function closePv() { el.pv.hidden = true; el.pvBody.innerHTML = ''; document.body.style.overflow = ''; pvFile = null; }
+el.pvClose.addEventListener('click', closePv);
+el.pvDl.addEventListener('click', () => pvFile && saveFile(pvFile, el.pvDl));
+el.cYes.addEventListener('click', () => askDone && askDone(true));
+el.cNo.addEventListener('click', () => askDone && askDone(false));
+const ask = () => new Promise(res => { el.confirm.hidden = false; el.cNo.focus(); askDone = v => { el.confirm.hidden = true; askDone = null; res(v); }; });
+el.batches.addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.f !== undefined) { const b = batches[+t.dataset.b]; if (b && b.files[+t.dataset.f]) openPv(b.files[+t.dataset.f]); return; }
+  if (t.dataset.dl) { const [bi, fi] = t.dataset.dl.split(':').map(Number); const f = batches[bi] && batches[bi].files[fi]; if (f) saveFile(f, t); return; }
+  if (t.dataset.zip) { const b = batches[+t.dataset.zip]; if (b) saveZip(b, t); return; }
+  if (t.dataset.del && canEdit) {
+    const b = batches[+t.dataset.del]; if (!b || !(await ask())) return;
+    try { await retry(() => db.doc('batches/' + b.id).delete()); if (assets) for (const f of b.files) assets.delete(f.a).catch(() => {}); toast('Устгалаа'); }
+    catch (err) { toast('Устгаж чадсангүй'); }
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (askDone) askDone(false); else if (!el.pv.hidden) closePv();
+});
+el.title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.title.blur(); } });
+el.title.addEventListener('blur', async () => {
+  if (!canEdit || !db) return;
+  const t = el.title.textContent.replace(/\s+/g, ' ').trim().slice(0, 80);
+  if (!t) { el.title.textContent = title || DEF_TITLE; return; }
+  if (t === (title || DEF_TITLE)) return;
+  try { await db.doc('meta/site').set({ title: t }); } catch (err) { toast('Нэрийг хадгалж чадсангүй'); el.title.textContent = title || DEF_TITLE; }
+});
+
+/* ---------- start ---------- */
+(async () => {
+  const C = window.claude;
+  if (!C || typeof C.use !== 'function') { el.status.textContent = 'Хуудсыг дахин ачаалж үзээрэй.'; return; }
+  [db, user] = await Promise.all([C.use('db'), C.use('user')]);
+  if (!db) { el.status.textContent = 'Энэ хуудсыг харах эрх танд алга байна.'; return; }
+  try { canEdit = !!(user && await user.canEdit()); } catch (e) {}
+  try { uid = (user && await user.id()) || ''; } catch (e) {}
+  [assets, dl] = await Promise.all([C.use('assets'), C.use('downloads')]);
+  el.send.hidden = !assets;
+  if (canEdit) {
+    try { el.title.contentEditable = 'plaintext-only'; } catch (e) {}
+    if (el.title.contentEditable !== 'plaintext-only') el.title.contentEditable = 'true';
+    el.title.title = 'Дарж нэрийг нь өөрчилнө';
+  }
+  renderPicked();
+  const t = setTimeout(() => { if (!loaded) el.status.textContent = 'Холбогдож чадсангүй. Интернэтээ шалгаад дахин нээж үзээрэй.'; }, 10000);
+  db.collection('batches').onSnapshot(s => {
+    batches = s.docs.map(cleanBatch).sort((a, b) => b.at - a.at);
+    if (!s.metadata.fromCache) { loaded = true; clearTimeout(t); el.status.textContent = ''; }
+    render();
+  }, () => { clearTimeout(t); loaded = true; el.status.textContent = 'Жагсаалтыг ачаалж чадсангүй. Дахин нээж үзээрэй.'; render(); });
+  db.doc('meta/site').onSnapshot(s => { title = s.exists ? String((s.data() || {}).title || '').slice(0, 80) : ''; render(); }, () => {});
+})();
+}
+</script>
+</body>
+</html>
