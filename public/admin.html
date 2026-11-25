@@ -15,6 +15,8 @@ body{margin:0;background:radial-gradient(55% 40% at 88% -6%,rgba(255,170,90,.28)
 .wrap{max-width:900px;margin:0 auto;padding:clamp(20px,4vw,40px) max(4vw,16px) 60px}
 header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:20px}
 h1{font:700 clamp(40px,6vw,54px)/1 'Caveat',cursive;margin:0}
+.hd{display:grid;gap:8px}.sn{display:grid;gap:4px;color:var(--mute);font-size:13px;font-weight:700}.sn .fld{max-width:340px;font-weight:700}
+.sitehead{font:700 34px/1.1 'Caveat',cursive;margin:28px 0 4px;display:flex;align-items:center;gap:10px}
 nav{display:flex;gap:8px;flex-wrap:wrap}
 .chip,.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--ink);font:700 15px 'Nunito',system-ui,sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
 .btn.pri{background:linear-gradient(135deg,#ffc36e,#ff9a7a);border-color:transparent;color:#2a1420}
@@ -58,9 +60,18 @@ pre{background:#0f0f12;border:1px solid var(--line);border-radius:12px;padding:1
 <body>
 <div class="wrap">
   <header>
-    <h1>Удирдлага</h1>
-    <nav><a class="chip" href="/">Цомог</a><a class="chip" href="/share/">Зураг дамжуулах</a><button class="chip" id="out">Гарах</button></nav>
+    <div class="hd"><h1>Удирдлага</h1><label class="sn">Гэр бүлийн нэр<input id="spaceName" class="fld" maxlength="60"></label></div>
+    <nav><a class="chip" id="toAlbum" href="/">Цомог</a><a class="chip" id="toShare" href="/share/">Зураг дамжуулах</a><a class="chip" href="/home">Гэр бүлүүд</a><button class="chip" id="out">Гарах</button></nav>
   </header>
+
+  <section id="drive">
+    <h2>Зураг хадгалах — Google Drive <span id="drivePill" class="pill no">Холбогдоогүй</span></h2>
+    <p class="sub" id="driveSub">Зургууд таны Google Drive-ийн «Гэр бүлийн цомог» хавтсанд эх чанараараа хадгалагдана. Сайт зөвхөн өөрийн үүсгэсэн файлуудад хандана, таны бусад файлыг харахгүй.</p>
+    <div class="urlrow"><a class="btn pri" id="driveGo" href="#">Google Drive холбох</a><button class="btn danger" id="driveOff" type="button" hidden>Салгах</button></div>
+    <p id="dMsg" class="msg"></p>
+    <div class="meter" id="meter"></div>
+    <div class="legend" id="legend"></div>
+  </section>
 
   <section>
     <h2>Хэн нэвтэрч болох вэ</h2>
@@ -85,6 +96,9 @@ pre{background:#0f0f12;border:1px solid var(--line);border-radius:12px;padding:1
     </div>
   </section>
 
+  <div id="siteBox" hidden>
+  <h2 class="sitehead">Сайтын тохиргоо <span class="pill ok">Зөвхөн танд</span></h2>
+  <p class="sub" id="siteStats"></p>
   <section>
     <h2>Google Sheets ба Gmail <span id="scriptPill" class="pill no">Холбогдоогүй</span></h2>
     <p class="sub">Нэвтрэх кодыг таны Gmail-ээс илгээж, шинэ цомог, зураг, сэтгэгдэл, илгээмжийг Google Sheets-д мөр болгон бичнэ. Нэг удаа тохируулна.</p>
@@ -104,11 +118,22 @@ pre{background:#0f0f12;border:1px solid var(--line);border-radius:12px;padding:1
   </section>
 
   <section>
-    <h2>Хадгалах зай</h2>
-    <p class="sub">Зургууд Cloudflare KV-д хадгалагдана. Үнэгүй багц 1 ГБ хүртэл, өдөрт 1000 удаа хадгалах боломжтой.</p>
-    <div class="meter" id="meter"></div>
-    <div class="legend" id="legend"></div>
+    <h2>Google Drive зөвшөөрөл <span id="gPill" class="pill no">Тохируулаагүй</span></h2>
+    <p class="sub">Гэр бүл бүр зургаа өөрийн Google Drive-д хадгалахын тулд сайтад Google-ийн «OAuth client» хэрэгтэй. Нэг удаа тохируулна.</p>
+    <ol>
+      <li><a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener" style="color:#ffc27a">console.cloud.google.com</a> дээр шинэ төсөл үүсгэ, ж: «Гэр бүлийн цомог».</li>
+      <li><a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener" style="color:#ffc27a">Google Drive API</a>-г нээгээд <b>Enable</b> дар.</li>
+      <li><a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener" style="color:#ffc27a">Google Auth Platform</a> → <b>Get started</b>: App name «Гэр бүлийн цомог», өөрийн имэйл, Audience: <b>External</b> → Create.</li>
+      <li><b>Data Access</b> → <b>Add or remove scopes</b>: <code>.../auth/drive.file</code>, <code>openid</code>, <code>.../auth/userinfo.email</code>-г сонгоод Update → Save.</li>
+      <li><b>Audience</b> → <b>Publish app</b> → Confirm. (Эдгээр нь «эмзэг биш» эрх тул Google-ийн шалгалт шаардлагагүй.)</li>
+      <li><b>Clients</b> → <b>Create client</b> → Application type: <b>Web application</b>. «Authorized redirect URIs» хэсэгт доорх хаягийг нэм → Create.
+        <div class="tok"><code id="gRedirect">…</code><button class="btn" id="gCopy" type="button">Хуулах</button></div></li>
+      <li>Гарсан <b>Client ID</b>, <b>Client secret</b>-ийг доор тавиад «Хадгалах» дар.</li>
+    </ol>
+    <div class="urlrow"><input id="gId" class="fld" placeholder="…apps.googleusercontent.com" autocomplete="off"><input id="gSecret" class="fld" type="password" placeholder="Client secret" autocomplete="off"><button class="btn pri" id="gSave" type="button">Хадгалах</button></div>
+    <p id="gMsg" class="msg"></p>
   </section>
+  </div>
 </div>
 <div id="toast" class="toast" role="status" hidden></div>
 <script type="text/plain" id="gsSrc">// Гэр бүлийн цомог — Google Sheets ба Gmail холболт
@@ -172,24 +197,46 @@ const MB = b => (b / 1048576).toFixed(b > 104857600 ? 0 : 1).replace('.', ',') +
 const toast = m => { $('toast').textContent = m; $('toast').hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { $('toast').hidden = true; }, 3200); };
 const ERR = { bad_email: 'Имэйл хаяг буруу байна.', is_owner: 'Энэ бол таны өөрийн хаяг.', no_roles: '«Гэр бүл» эсвэл «Хамт олон»-ы аль нэгийг сонгоно уу.', bad_url: 'URL буруу байна. …/exec гэж төгссөн Web app URL байх ёстой.' };
 let state = null;
+const SPACE = (location.pathname.match(/^\/s\/([a-z0-9]{8})\//) || [])[1] || '', BASE = '/s/' + SPACE;
+$('toAlbum').href = BASE + '/'; $('toShare').href = BASE + '/share/'; $('driveGo').href = BASE + '/drive/connect';
 async function call(path, body) {
-  const r = await fetch('/api/admin/' + path, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), credentials: 'same-origin' } : { credentials: 'same-origin' });
-  if (r.status === 401) { location.href = '/login?next=/admin'; return {}; }
+  const r = await fetch('/api/admin/' + path + '?space=' + SPACE, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...body, space: SPACE }), credentials: 'same-origin' } : { credentials: 'same-origin' });
+  if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); return {}; }
   return r.json().catch(() => ({ error: 'net' }));
 }
-function gsCode() { return $('gsSrc').textContent.replace("'ЭНД_ТҮЛХҮҮРЭЭ_ТАВЬ'", `'${state ? state.script.token : ''}'`).trim(); }
+function gsCode() { return $('gsSrc').textContent.replace("'ЭНД_ТҮЛХҮҮРЭЭ_ТАВЬ'", `'${state && state.site ? state.site.script.token : ''}'`).trim(); }
 function render() {
   const s = state;
   $('users').innerHTML = `<tr><td><input class="fld" id="ownerName" maxlength="40" value="${esc(s.owner.name)}" aria-label="Таны нэр"></td><td class="em">${esc(s.owner.email)}</td><td class="c" colspan="2">Эзэн · бүх эрхтэй</td><td class="c"><button class="btn" data-link="${esc(s.owner.email)}" data-who="${esc(s.owner.name)}" title="Өөр утас, компьютер дээрээ нэвтрэх линк">Линк</button></td></tr>` +
     s.users.map(u => { const r = String(u.roles).split(','); return `<tr data-email="${esc(u.email)}"><td><input class="fld" data-name value="${esc(u.name)}" maxlength="40" aria-label="Нэр"></td><td class="em">${esc(u.email)}</td><td class="c"><input type="checkbox" data-role="family" ${r.includes('family') ? 'checked' : ''} aria-label="Гэр бүл"></td><td class="c"><input type="checkbox" data-role="coworker" ${r.includes('coworker') ? 'checked' : ''} aria-label="Хамт олон"></td><td class="c"><div class="ubtn"><button class="btn" data-link="${esc(u.email)}" data-who="${esc(u.name)}">Линк</button><button class="btn danger" data-del>Хасах</button></div></td></tr>`; }).join('');
-  const ok = !!s.script.url;
+  if (document.activeElement !== $('spaceName')) $('spaceName').value = s.space.name;
+  document.title = 'Удирдлага · ' + s.space.name;
+  const d = s.drive;
+  $('drivePill').className = 'pill ' + (d.connected && !d.err ? 'ok' : 'no');
+  $('drivePill').textContent = d.connected ? (d.err ? 'Холболт салсан' : 'Холбогдсон') : 'Холбогдоогүй';
+  $('driveGo').textContent = d.connected ? 'Дахин холбох' : 'Google Drive холбох';
+  $('driveGo').hidden = d.connected && !d.err; $('driveOff').hidden = !d.connected;
+  if (!d.connected && !d.ready) { $('driveGo').hidden = true; $('dMsg').className = 'msg err'; $('dMsg').textContent = 'Сайтын Google тохиргоо хараахан хийгдээгүй байна. Удахгүй боломжтой болно.'; }
+  else if (d.connected && !d.err) { $('dMsg').className = 'msg ok'; $('dMsg').textContent = `${d.email || 'Таны'} Google Drive-д хадгалж байна.`; }
+  else if (d.err) { $('dMsg').className = 'msg err'; $('dMsg').textContent = 'Google Drive-ийн зөвшөөрөл цуцлагдсан байна. «Дахин холбох» дарна уу.'; }
+  else if (s.usage.kv) { $('dMsg').className = 'msg'; $('dMsg').textContent = 'Одоогоор зургууд сайтын түр санд (1 ГБ) хадгалагдаж байна. Drive холбосны дараа шинэ зургууд Drive-д хадгалагдана.'; }
+  const u = s.usage, q = u.quota || Math.max(u.bytes, 1);
+  $('meter').innerHTML = u.quota ? `<i style="width:${Math.min(100, u.album / q * 100)}%;background:#ffb45e"></i><i style="width:${Math.min(100, u.share / q * 100)}%;background:#6aa8ff"></i>` : '';
+  $('meter').hidden = !u.quota;
+  $('legend').innerHTML = `<span><span class="dot" style="background:#ffb45e"></span>Цомог <b>${MB(u.album)}</b></span><span><span class="dot" style="background:#6aa8ff"></span>Зураг дамжуулах <b>${MB(u.share)}</b></span><span>Нийт <b>${MB(u.bytes)}</b>${u.quota ? ' / ' + MB(u.quota) : ''}</span><span>Файл <b>${u.files}</b></span>`;
+  $('siteBox').hidden = !s.site;
+  if (!s.site) return;
+  const t = s.site;
+  $('siteStats').textContent = `${t.stats.spaces} гэр бүл · ${t.stats.accounts} хэрэглэгч · өнөөдөр ${t.mailToday}/${t.mailLimit} нэвтрэх код илгээсэн`;
+  const ok = !!t.script.url;
   $('scriptPill').className = 'pill ' + (ok ? 'ok' : 'no'); $('scriptPill').textContent = ok ? 'Холбогдсон' : 'Холбогдоогүй';
-  $('token').textContent = s.script.token; $('gs').textContent = gsCode();
-  if (document.activeElement !== $('url')) $('url').value = s.script.url || '';
-  $('sheetLine').hidden = !s.script.sheet; if (s.script.sheet && /^https:\/\/docs\.google\.com\//.test(s.script.sheet)) $('sheetLink').href = s.script.sheet;
-  const u = s.usage, q = u.quota;
-  $('meter').innerHTML = `<i style="width:${Math.min(100, u.album / q * 100)}%;background:#ffb45e"></i><i style="width:${Math.min(100, u.share / q * 100)}%;background:#6aa8ff"></i>`;
-  $('legend').innerHTML = `<span><span class="dot" style="background:#ffb45e"></span>Цомог <b>${MB(u.album)}</b></span><span><span class="dot" style="background:#6aa8ff"></span>Зураг дамжуулах <b>${MB(u.share)}</b></span><span>Нийт <b>${MB(u.bytes)}</b> / ${MB(q)}</span><span>Файл <b>${u.files}</b> / ${u.quotaFiles}</span>`;
+  $('token').textContent = t.script.token; $('gs').textContent = gsCode();
+  if (document.activeElement !== $('url')) $('url').value = t.script.url || '';
+  $('sheetLine').hidden = !t.script.sheet; if (t.script.sheet && /^https:\/\/docs\.google\.com\//.test(t.script.sheet)) $('sheetLink').href = t.script.sheet;
+  $('gRedirect').textContent = t.google.redirect;
+  $('gPill').className = 'pill ' + (t.google.clientId && t.google.hasSecret ? 'ok' : 'no'); $('gPill').textContent = t.google.clientId && t.google.hasSecret ? 'Тохируулсан' : 'Тохируулаагүй';
+  if (document.activeElement !== $('gId')) $('gId').value = t.google.clientId;
+  $('gSecret').placeholder = t.google.hasSecret ? 'Хадгалсан (солих бол шинээр тавь)' : 'Client secret';
 }
 async function load() { const s = await call('state'); if (s && !s.error) { state = s; render(); } }
 $('users').addEventListener('change', async e => {
@@ -232,6 +279,24 @@ const showTest = j => {
 $('saveUrl').addEventListener('click', async () => { $('saveUrl').disabled = true; $('sMsg').className = 'msg'; $('sMsg').textContent = 'Шалгаж байна…'; const j = await call('script', { url: $('url').value }); $('saveUrl').disabled = false; showTest(j); load(); });
 $('test').addEventListener('click', async () => { $('sMsg').className = 'msg'; $('sMsg').textContent = 'Шалгаж байна…'; showTest(await call('test', {})); load(); });
 $('copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(gsCode()); toast('Кодыг хууллаа'); } catch (e) { toast('Хуулж чадсангүй, «Кодыг харах»-аас гараар хуулна уу'); } });
+$('spaceName').addEventListener('change', async e => { const j = await call('space-name', { name: e.target.value }); toast(j.error ? 'Нэр буруу байна' : 'Гэр бүлийн нэрийг хадгаллаа'); load(); });
+$('driveOff').addEventListener('click', async () => {
+  const b = $('driveOff');
+  if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Итгэлтэй юу? Дахин дарна уу'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Салгах'; }, 4000); return; }
+  await call('drive-disconnect', {}); toast('Google Drive-ийг салгалаа. Drive дахь зургууд тань хэвээр үлдэнэ.'); load();
+});
+$('gCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('gRedirect').textContent); toast('Хууллаа'); } catch (e) { toast('Гараар хуулна уу'); } });
+$('gSave').addEventListener('click', async () => {
+  const j = await call('google', { clientId: $('gId').value, clientSecret: $('gSecret').value });
+  $('gMsg').className = 'msg ' + (j.error ? 'err' : 'ok');
+  $('gMsg').textContent = j.error ? ({ bad_client_id: 'Client ID буруу байна (…apps.googleusercontent.com гэж төгсөнө).', bad_secret: 'Client secret-ээ оруулна уу.' }[j.error] || 'Хадгалж чадсангүй') : 'Хадгаллаа. Одоо гэр бүлүүд Drive-аа холбож болно.';
+  if (!j.error) { $('gSecret').value = ''; load(); }
+});
+{
+  const q = new URLSearchParams(location.search).get('drive');
+  const M = { ok: ['ok', 'Google Drive холбогдлоо! Шинэ зургууд Drive-д хадгалагдана.'], denied: ['err', 'Google дээр зөвшөөрөл өгөөгүй байна.'], failed: ['err', 'Google Drive холбож чадсангүй. Дахин оролдоно уу.'], scope: ['err', 'Google-ийн цонхонд «Google Drive» гэсэн зөвлөлийг чагтлаад дахин оролдоно уу.'] };
+  if (M[q]) { setTimeout(() => { $('dMsg').className = 'msg ' + M[q][0]; $('dMsg').textContent = M[q][1]; }, 400); history.replaceState(null, '', location.pathname + '#drive'); }
+}
 $('out').addEventListener('click', async () => { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }); location.href = '/login'; });
 load();
 }

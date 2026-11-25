@@ -1,7 +1,9 @@
 /* Гэр бүлийн цомог — Cloudflare дээрх хуудсуудад window.claude-ийн оронд ажиллана.
    db (D1), assets (KV), user, downloads, comments-ийг сайтын API-тай холбоно. */
 (() => {
-  const APP = location.pathname.startsWith('/share') ? 'share' : 'album';
+  const SPACE = (location.pathname.match(/^\/s\/([a-z0-9]{8})(?=\/)/) || [])[1] || '';
+  const BASE = SPACE ? '/s/' + SPACE : '';
+  const APP = location.pathname.slice(BASE.length).startsWith('/share') ? 'share' : 'album';
   const POLL = 6000;
   const SEG = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -16,7 +18,7 @@
   }
   async function api(body) {
     let r;
-    try { r = await fetch('/api/db', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ app: APP, ...body }), credentials: 'same-origin' }); }
+    try { r = await fetch('/api/db', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ app: APP, space: SPACE, ...body }), credentials: 'same-origin' }); }
     catch (e) { throw { code: 'unavailable', message: 'network' }; }
     if (r.status === 401) { goLogin(); throw { code: 'revoked', message: 'signed out' }; }
     const j = await r.json().catch(() => ({ error: 'unavailable' }));
@@ -87,7 +89,7 @@
   const db = Object.freeze({ doc: docRef, collection: colRef });
 
   /* ---- who is here ---- */
-  const meP = fetch('/api/me', { credentials: 'same-origin' }).then(r => {
+  const meP = fetch('/api/me?space=' + SPACE, { credentials: 'same-origin' }).then(r => {
     if (r.status === 401) { goLogin(); return null; }
     return r.ok ? r.json() : null;
   }).catch(() => null);
@@ -96,7 +98,7 @@
     async upload(blob, opt) {
       const type = (opt && opt.type) || blob.type;
       let r;
-      try { r = await fetch('/api/assets?app=' + APP, { method: 'POST', headers: { 'content-type': type }, body: blob, credentials: 'same-origin' }); }
+      try { r = await fetch('/api/assets?app=' + APP + '&space=' + SPACE, { method: 'POST', headers: { 'content-type': type }, body: blob, credentials: 'same-origin' }); }
       catch (e) { throw { code: 'store_unavailable' }; }
       const j = await r.json().catch(() => ({ error: 'upstream_error' }));
       if (!r.ok || j.error) throw { code: j.error || 'upstream_error', message: j.error };
@@ -157,6 +159,7 @@
 .mechip{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:20;display:flex;gap:4px;align-items:center;background:rgba(42,29,48,.9);color:#fbeee0;border:1px solid #4a3550;border-radius:999px;padding:4px 6px 4px 12px;font:600 13px 'Nunito',system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3)}
 .mechip a,.mechip button{all:unset;cursor:pointer;color:#ffc27a;font-weight:800;padding:6px 8px;border-radius:999px}
 .mechip a:focus-visible,.mechip button:focus-visible{outline:2px solid #ffb45e}
+.mechip a.mx-warn{background:#ffb45e;color:#2a1420}
 body.traying .mechip{display:none}`;
     document.head.appendChild(css);
     panel = document.createElement('div');
@@ -226,7 +229,7 @@ body.traying .mechip{display:none}`;
     ensurePanel();
     const c = document.createElement('div');
     c.className = 'mechip';
-    c.innerHTML = `<span>${esc(me.name)}</span>${me.owner ? '<a href="/admin">Удирдлага</a>' : ''}${me.can.album.read && APP === 'share' ? '<a href="/">Цомог</a>' : ''}${me.can.share.read && APP === 'album' ? '<a href="/share/">Дамжуулах</a>' : ''}<button type="button">Гарах</button>`;
+    c.innerHTML = `<span>${esc(me.name)}</span>${(me.spaces || []).length > 1 ? '<a href="/home">Гэр бүлүүд</a>' : ''}${me.owner && me.space && !me.space.store ? `<a class="mx-warn" href="${BASE}/admin#drive">Google Drive холбох</a>` : ''}${me.owner ? `<a href="${BASE}/admin">Удирдлага</a>` : ''}${me.can.album.read && APP === 'share' ? `<a href="${BASE}/">Цомог</a>` : ''}${me.can.share.read && APP === 'album' ? `<a href="${BASE}/share/">Дамжуулах</a>` : ''}<button type="button">Гарах</button>`;
     c.querySelector('button').addEventListener('click', async () => { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {}); location.href = '/login'; });
     document.body.appendChild(c);
   }
@@ -234,6 +237,7 @@ body.traying .mechip{display:none}`;
   async function use(name) {
     me = me || await meP;
     if (!me) return null;
+    if (!me.can) return null;
     const c = me.can[APP];
     if (name === 'db') return c.read ? db : null;
     if (name === 'user') return Object.freeze({

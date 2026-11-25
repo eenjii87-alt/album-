@@ -589,7 +589,7 @@ const FR = { w: 'Цагаан хүрээ', c: 'Булан', p: 'Полароид
 const LABELS = ['Хайртай', 'Гэр бүл', 'Дурсамж', 'Бага нас', 'Алтан цаг', 'Зуны орой', 'Мөрөөдөл', 'Аз жаргал', 'Хамтдаа', 'Төрсөн өдрийн мэнд!'];
 const CELLS = [[.27, .27], [.73, .27], [.27, .71], [.73, .71], [.27, 1.15], [.73, 1.15]], PER = 6;
 const cellW = ar => Math.round(Math.min(.43, .37 / ar) * 1000) / 1000;
-const ERR = { too_large: 'Зураг хэт том байна.', unsupported_type: 'Энэ төрлийн файлыг хадгалах боломжгүй, JPG эсвэл PNG зураг оруулна уу.', quota_or_state: 'Хадгалах зай дүүрсэн байна.', quota_exceeded: 'Хадгалах зай дүүрсэн байна.', rate_limited: 'Хэт олон удаа илгээлээ, хэсэг хүлээгээд дахин оролдоорой.' };
+const ERR = { drive_needed: 'Эхлээд Удирдлага хуудаснаас Google Drive-аа холбоно уу.', drive_full: 'Google Drive-ийн зай дүүрсэн байна.', drive_revoked: 'Google Drive-ийн холболт салсан байна, Удирдлага хуудаснаас дахин холбоно уу.', drive_failed: 'Google Drive руу хадгалж чадсангүй, дахин оролдоно уу.', too_large: 'Зураг хэт том байна.', unsupported_type: 'Энэ төрлийн файлыг хадгалах боломжгүй, JPG эсвэл PNG зураг оруулна уу.', quota_or_state: 'Хадгалах зай дүүрсэн байна.', quota_exceeded: 'Хадгалах зай дүүрсэн байна.', rate_limited: 'Хэт олон удаа илгээлээ, хэсэг хүлээгээд дахин оролдоорой.' };
 
 const el = {};
 for (const id of ['tabWall','vWall','wStatus','wShuf','wall','mPrint','lbZoomIn','lbZoomOut','lbHint','prPages','prCards','prCancel','top','title','sub','tabShelf','tabTl','vShelf','shStatus','shelf','vTl','tlStatus','tlYears','tlBody','vAlb','aTitle','aBadge','aPrint','aSet','aEdit','aStatus','desk','cover','spread','aEmpty','aEmptyMsg','pprev','pnext','pcount','tray','ttabs','tbody','file','lb','lbCount','lbClose','lbTrack','lbPrev','lbNext','lbCap','lbMeta','lbGo','lbCmt','lbDl','mAlb','fAlb','fAlbH','fTitle','fTheme','fCollab','fCollabL','fColors','fStk','fDel','fCancel','confirm','cH','cD','cNo','cYes','busy','busyT','busyB','veil','toast']) el[id] = $(id);
@@ -639,7 +639,7 @@ function cleanItem(i) {
   if (!i || typeof i !== 'object') return null;
   const it = { id: String(i.id || '').replace(/[^a-z0-9]/gi, '').slice(0, 24) || rid(), t: i.t, x: num(i.x, .5, -.2, 1.2), y: num(i.y, .7, -.2, PH + .2), w: num(i.w, .4, .005, 1.3), r: num(i.r, 0, -180, 180), z: Math.round(num(i.z, 1, 0, 9999)) };
   if (typeof i.by === 'string' && /^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(i.by)) it.by = i.by;
-  if (i.t === 'p') { if (!okAsset(i.asset)) return null; if (has(FX, i.fx)) it.fx = i.fx; Object.assign(it, { asset: i.asset, ar: num(i.ar, .75, .2, 5), type: String(i.type || '').slice(0, 40), taken: isDate(i.taken) ? i.taken : '', cap: String(i.cap || '').slice(0, 200), fr: has(FR, i.fr) ? i.fr : 'w' }); if (+i.cr > 0) it.cr = num(i.cr, 1, .2, 5); }
+  if (i.t === 'p') { if (!okAsset(i.asset)) return null; if (has(FX, i.fx)) it.fx = i.fx; if (okAsset(i.pv)) it.pv = i.pv; Object.assign(it, { asset: i.asset, ar: num(i.ar, .75, .2, 5), type: String(i.type || '').slice(0, 40), taken: isDate(i.taken) ? i.taken : '', cap: String(i.cap || '').slice(0, 200), fr: has(FR, i.fr) ? i.fr : 'w' }); if (+i.cr > 0) it.cr = num(i.cr, 1, .2, 5); }
   else if (i.t === 's') it.s = has(ST, i.s) ? i.s : 'heart';
   else if (i.t === 'n') { it.text = String(i.text || '').slice(0, 500); it.st = has(NT, i.st) ? i.st : 'yellow'; }
   else if (i.t === 'd') { if (typeof i.pts !== 'string' || !/^[0-9, ]{3,8000}$/.test(i.pts)) return null; Object.assign(it, { pts: i.pts.trim(), ar: num(i.ar, .5, .003, 60), col: penOk(i.col) ? i.col : 'ink', sw: num(i.sw, 8, .3, 600) }); }
@@ -776,7 +776,7 @@ el.fDel.addEventListener('click', async () => {
     if (album && album.id === a.id) leaveAlbum();
     const s = await pagesCol(a).get(), gone = [];
     for (const d of s.docs) {
-      for (const i of ((d.data() || {}).items || [])) if (i && i.t === 'p' && okAsset(i.asset)) gone.push(i.asset);
+      for (const i of ((d.data() || {}).items || [])) if (i && i.t === 'p' && okAsset(i.asset)) { gone.push(i.asset); if (okAsset(i.pv)) gone.push(i.pv); }
       await retry(() => pagesCol(a).doc(d.id).delete());
     }
     await retry(() => albumDoc(a).delete());
@@ -860,7 +860,7 @@ function itemHTML(it) {
   if (it.t === 'p') {
     cls = 'ph fr-' + it.fr + (it.fx ? ' fx-' + it.fx : '');
     const card = it.fr === 'k' ? `<span class="kt">${esc(it.cap || (album && album.title) || '')}</span><span class="km">${esc(fmtDate(it.taken))}</span>` : '';
-    inner = `<div class="fr"${c ? ' data-comment-target' : ''}><span class="iw"><img src="/_blob/${esc(it.asset)}" alt="${esc(it.cap || 'Зураг')}" style="aspect-ratio:1/${dispAr(it)}" loading="lazy" decoding="async" draggable="false"></span><i class="k k1"></i><i class="k k2"></i><i class="k k3"></i><i class="k k4"></i>${it.fr === 'p' && it.cap ? `<span class="pc in">${esc(it.cap)}</span>` : ''}${card}</div>${it.fr !== 'p' && it.fr !== 'k' && it.cap ? `<span class="pc">${esc(it.cap)}</span>` : ''}${c ? `<button class="cb" data-act="cmt" aria-label="Энэ зурагт сэтгэгдэл бичих">${I('cmt')}</button>` : ''}`;
+    inner = `<div class="fr"${c ? ' data-comment-target' : ''}><span class="iw"><img src="/_blob/${esc(it.pv || it.asset)}" alt="${esc(it.cap || 'Зураг')}" style="aspect-ratio:1/${dispAr(it)}" loading="lazy" decoding="async" draggable="false"></span><i class="k k1"></i><i class="k k2"></i><i class="k k3"></i><i class="k k4"></i>${it.fr === 'p' && it.cap ? `<span class="pc in">${esc(it.cap)}</span>` : ''}${card}</div>${it.fr !== 'p' && it.fr !== 'k' && it.cap ? `<span class="pc">${esc(it.cap)}</span>` : ''}${c ? `<button class="cb" data-act="cmt" aria-label="Энэ зурагт сэтгэгдэл бичих">${I('cmt')}</button>` : ''}`;
   } else if (it.t === 's') { cls = 'stk' + (ST[it.s][4] ? ' ink' : '') + (GLOW.includes(it.s) ? ' glow' : GLOW2.includes(it.s) ? ' glow2' : ''); inner = stSvg(it.s); }
   else if (it.t === 'd') { cls = 'drw'; inner = `<svg viewBox="0 0 1000 ${Math.max(1, Math.round(1000 * it.ar))}" aria-hidden="true"><path d="${penPath(it.pts)}" fill="none" stroke="${it.col === 'ink' ? 'currentColor' : it.col}" stroke-width="${it.sw}" stroke-linecap="round" stroke-linejoin="round"/></svg>`; }
   else { cls = 'note'; inner = `<div class="nt ${it.st}">${esc(it.text) || '&nbsp;'}</div>`; }
@@ -919,7 +919,7 @@ function syncCounts() {
   cntT = setTimeout(() => {
     if (!a || !album || album.id !== a.id || !contribOf(album)) return;
     const ph = pages.flatMap(p => p.items.filter(i => i.t === 'p'));
-    const np = pages.length, nph = ph.length, cover = ph[0] ? ph[0].asset : '';
+    const np = pages.length, nph = ph.length, cover = ph[0] ? (ph[0].pv || ph[0].asset) : '';
     if (np !== album.np || nph !== album.nph || cover !== album.cover) albumDoc(album).update({ np, nph, cover }).catch(() => {});
   }, 1500);
 }
@@ -942,7 +942,7 @@ async function removeItem(p, it) {
   p.items = p.items.filter(i => i !== it);
   if (selId === it.id) selId = null;
   savePage(p); renderBook(); renderTray();
-  if (it.t === 'p' && assets) setTimeout(() => assets.delete(it.asset).catch(() => {}), 2500);
+  if (it.t === 'p' && assets) setTimeout(() => { assets.delete(it.asset).catch(() => {}); if (it.pv) assets.delete(it.pv).catch(() => {}); }, 2500);
 }
 
 /* pointer: select, drag, rotate/scale, swipe */
@@ -1151,7 +1151,7 @@ async function pageOp(op) {
     if (!(await ask('Энэ хуудсыг устгах уу?', p.items.some(x => x.t === 'p') ? 'Хуудсан дээрх зургууд хамт устна.' : 'Хуудас бүр мөсөн устна.', 'Устгах'))) return;
     p.deleted = true; clearTimeout(p.timer); pages = pages.filter(x => x !== p);
     try { await retry(() => pagesCol(album).doc(p.id).delete()); } catch (e) { toast('Устгаж чадсангүй'); }
-    if (assets) p.items.filter(x => x.t === 'p').forEach(x => assets.delete(x.asset).catch(() => {}));
+    if (assets) p.items.filter(x => x.t === 'p').forEach(x => { assets.delete(x.asset).catch(() => {}); if (x.pv) assets.delete(x.pv).catch(() => {}); });
     activePage = clamp(i, 0, Math.max(0, pages.length - 1)); showPage(activePage); renderAlbum(); renderTray(); syncCounts();
   }
 }
@@ -1173,6 +1173,19 @@ async function shrink(f) {
     return { blob, w, h };
   } catch (e) { return { blob: f, w: 0, h: 0 }; }
 }
+// эх файлыг хэвээр нь (HEIC бол бүтэн хэмжээгээр нь JPEG болгож) хадгална; хуудсанд жижиг хувилбар нь харагдана
+async function original(f, small) {
+  if (small === f) return null;
+  if (/^image\/(jpeg|png|webp|gif)$/.test(f.type)) return f.size > small.size * 1.25 ? f : null;
+  try {
+    const bm = await createImageBitmap(f, { imageOrientation: 'from-image' });
+    if (Math.max(bm.width, bm.height) <= 2048) { if (bm.close) bm.close(); return null; }
+    const cv = document.createElement('canvas'); cv.width = bm.width; cv.height = bm.height;
+    const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(bm, 0, 0);
+    if (bm.close) bm.close();
+    return await new Promise(res => cv.toBlob(res, 'image/jpeg', .93));
+  } catch (e) { return null; }
+}
 async function addPhotos(files) {
   if (!assets || !album || upBusy) return;
   if (!pagesOk) { toast('Хуудсууд ачаалж байна, түр хүлээгээд дахин оролдоорой'); return; }
@@ -1188,20 +1201,23 @@ async function addPhotos(files) {
       const { blob, w, h } = await shrink(f);
       const type = blob.type;
       if (!/^image\/(jpeg|png|webp|gif)$/.test(type)) throw { code: 'unsupported_type' };
+      const orig = await original(f, blob);
       const r = await retry(() => assets.upload(blob, { type }));
-      if (!album || album.id !== a.id) { assets.delete(r.id).catch(() => {}); break; }
+      let r0 = null;
+      if (orig) { try { r0 = await retry(() => assets.upload(orig, { type: orig.type })); } catch (e) { if (e && e.code !== 'too_large') { assets.delete(r.id).catch(() => {}); throw e; } } }
+      if (!album || album.id !== a.id) { assets.delete(r.id).catch(() => {}); if (r0) assets.delete(r0.id).catch(() => {}); break; }
       if (!pages.includes(page)) page = pages[pages.length - 1] || newPage(-1);
       let cnt = page.items.filter(i => i.t === 'p').length;
       if (cnt >= PER) { page = newPage(pages.indexOf(page)); cnt = 0; }
       const [x, y] = CELLS[cnt], z = page.items.reduce((m, i) => Math.max(m, i.z), 0) + 1;
       const ar = w && h ? h / w : .75;
-      const it = cleanItem({ ...byMe(), id: rid(), t: 'p', asset: r.id, type: r.contentType || type, ar, taken: ymd(f.lastModified), cap: '', fr: 'w', fx: thm().fx, x, y, w: cellW(ar), r: Math.round((Math.random() - .5) * 30) / 10, z });
+      const it = cleanItem({ ...byMe(), id: rid(), t: 'p', asset: r0 ? r0.id : r.id, ...(r0 ? { pv: r.id } : {}), type: r0 ? (r0.contentType || orig.type) : (r.contentType || type), ar, taken: ymd(f.lastModified), cap: '', fr: 'w', fx: thm().fx, x, y, w: cellW(ar), r: Math.round((Math.random() - .5) * 30) / 10, z });
       if (it) { page.items.push(it); savePage(page); ok++; }
       activePage = pages.indexOf(page); showPage(activePage);
       if (!drag) renderBook();
     } catch (e) {
       bad++; why = ERR[e && e.code] || why;
-      if (e && (e.code === 'quota_or_state' || e.code === 'quota_exceeded')) { bad += list.length - k - 1; break; }
+      if (e && ['quota_or_state', 'quota_exceeded', 'drive_needed', 'drive_full', 'drive_revoked'].includes(e.code)) { bad += list.length - k - 1; break; }
     }
   }
   busyHide(); upBusy = false; syncCounts();
@@ -1396,7 +1412,7 @@ async function loadTimeline() {
 function renderWall() {
   el.wStatus.textContent = tlList.length ? `${tlList.length} зураг` : 'Одоохондоо зураг алга. Цомогт зураг нэмэхэд энд хана болж харагдана.';
   el.wShuf.hidden = tlList.length < 2;
-  el.wall.innerHTML = tlList.map((e, k) => `<button class="wt" data-k="${k}" aria-label="${esc(e.it.cap || 'Зураг')}"><img src="/_blob/${esc(e.it.asset)}" alt="" loading="lazy" decoding="async"></button>`).join('');
+  el.wall.innerHTML = tlList.map((e, k) => `<button class="wt" data-k="${k}" aria-label="${esc(e.it.cap || 'Зураг')}"><img src="/_blob/${esc(e.it.pv || e.it.asset)}" alt="" loading="lazy" decoding="async"></button>`).join('');
 }
 el.wall.addEventListener('click', e => { const b = e.target.closest('.wt'); if (b) openLb(tlList, +b.dataset.k, 'timeline'); });
 el.wShuf.addEventListener('click', () => { for (let i = tlList.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [tlList[i], tlList[j]] = [tlList[j], tlList[i]]; } renderWall(); });
@@ -1469,7 +1485,7 @@ async function drawItem(x, it, bg) {
   const shadow = () => { x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = W * .03; x.shadowOffsetY = W * .012; };
   const noShadow = () => { x.shadowColor = 'transparent'; x.shadowBlur = 0; x.shadowOffsetY = 0; };
   if (it.t === 'p') {
-    let im = null; try { im = await loadImg('/_blob/' + it.asset); } catch (e) {}
+    let im = null; try { im = await loadImg('/_blob/' + (it.pv || it.asset)); } catch (e) {}
     const fr = it.fr, ar = dispAr(it);
     const F = thm().f, pd = fr === 'p' || fr === 'k' ? W * .05 : fr === 'w' ? W * .022 : 0, iw = W - 2 * pd, ih = iw * ar, fs = (fr === 'p' ? W * .085 : W * .11) * F.hs;
     x.font = fspec('', 500, fs, F.h);
@@ -1619,7 +1635,7 @@ async function printCards() {
       const c = document.createElement('canvas'); c.width = PX; c.height = PY; const x = c.getContext('2d');
       x.fillStyle = '#ffffff'; x.fillRect(0, 0, PX, PY);
       for (let k = 0; k < 4 && s0 + k < list.length; k++) {
-        const e = list[s0 + k]; let im = null; try { im = await loadImg('/_blob/' + e.it.asset); } catch (err) {}
+        const e = list[s0 + k]; let im = null; try { im = await loadImg('/_blob/' + (e.it.pv || e.it.asset)); } catch (err) {}
         drawCard(x, e, m + (k % 2) * (cw + m), y0 + Math.floor(k / 2) * (ch + m), cw, im);
       }
       if (s0) pdf.addPage();

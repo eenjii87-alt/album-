@@ -38,7 +38,7 @@ button.go:disabled{opacity:.55;cursor:default}
   <div class="page">
     <h1>Гэр бүлийн цомог</h1>
     <form id="f1">
-      <p>Имэйл хаягаа оруулбал нэвтрэх код илгээнэ.</p>
+      <p>Имэйл хаягаа оруулбал нэвтрэх код илгээнэ. Анх удаа бол автоматаар бүртгэгдэнэ.</p>
       <label for="email">Имэйл</label>
       <input id="email" type="email" autocomplete="email" inputmode="email" required placeholder="name@gmail.com">
       <button class="go" id="b1" type="submit">Код авах</button>
@@ -51,7 +51,7 @@ button.go:disabled{opacity:.55;cursor:default}
       <div class="row"><button type="button" id="back">Өөр имэйл</button><button type="button" id="again" disabled>Дахин илгээх</button></div>
     </form>
     <p id="msg" class="msg" role="status"></p>
-    <p class="foot">Зөвхөн сайтын эзний зөвшөөрсөн имэйлээр нэвтэрнэ. Код ирэхгүй бол спам хавтсаа шалгаарай.</p>
+    <p class="foot">Код ирэхгүй бол спам хавтсаа шалгаарай. Нэвтэрснээр та <a href="/terms" style="color:#ffc27a">үйлчилгээний нөхцөл</a>-ийг зөвшөөрнө.</p>
   </div>
 </main>
 <script>
@@ -60,7 +60,7 @@ const $ = id => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 const raw = qs.get('next') || '/';
 const next = /^\/(?!\/)/.test(raw) && !raw.startsWith('/login') ? raw : '/';
-const MSG = { bad_email: 'Имэйл хаяг буруу байна.', mail_not_ready: 'Имэйлээр код илгээх тохиргоо хараахан хийгдээгүй байна. Цомгийн эзнээс нэвтрэх линк аваарай.', wait: 'Түр хүлээгээд дахин оролдоорой.', mail_failed: 'Имэйл илгээж чадсангүй. Түр хүлээгээд дахин оролдоорой.', wrong_code: 'Код буруу байна.', expired: 'Кодын хугацаа дууссан эсвэл олон удаа буруу оруулсан. Шинэ код аваарай.' };
+const MSG = { bad_email: 'Имэйл хаяг буруу байна.', mail_not_ready: 'Имэйлээр код илгээх тохиргоо хараахан хийгдээгүй байна. Цомгийн эзнээс нэвтрэх линк аваарай.', mail_daily_limit: 'Өнөөдрийн код илгээх хязгаар дууслаа. Маргааш дахин оролдоорой, эсвэл цомгийн эзнээс нэвтрэх линк аваарай.', wait: 'Түр хүлээгээд дахин оролдоорой.', mail_failed: 'Имэйл илгээж чадсангүй. Түр хүлээгээд дахин оролдоорой.', wrong_code: 'Код буруу байна.', expired: 'Кодын хугацаа дууссан эсвэл олон удаа буруу оруулсан. Шинэ код аваарай.' };
 const say = (t, ok) => { $('msg').textContent = t || ''; $('msg').className = 'msg' + (ok ? ' ok' : ''); };
 if (qs.get('setup') === 'bad') say('Энэ нэвтрэх линк хүчингүй болсон байна. Имэйлээрээ нэвтэрнэ үү.');
 let email = '', t = 0;
@@ -82,7 +82,7 @@ async function start() {
   if (j.error) { say(MSG[j.error] || 'Алдаа гарлаа, дахин оролдоорой.'); return; }
   say('');
   $('f1').hidden = true; $('f2').hidden = false;
-  $('sentTo').textContent = `Хэрэв ${email} хаяг зөвшөөрөгдсөн бол код руу нь явлаа.`;
+  $('sentTo').textContent = `${email} хаяг руу 6 оронтой код явлаа.`;
   $('code').value = ''; $('code').focus(); cooldown();
 }
 $('f1').addEventListener('submit', e => { e.preventDefault(); start(); });

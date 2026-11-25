@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Гэр бүлийн цомог — зургаа хадгалж, хайртай хүмүүстэйгээ хуваалц</title>
+<meta name="description" content="Жинхэнэ цомог шиг сайт: зургаа өөрийн Google Drive-д эх чанараар нь хадгалж, аав ээж, ажлынхантайгаа хуваалц.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#1d1322;--bg2:#2a1d30;--ink:#fbeee0;--mute:#c4a9b8;--line:#4a3550;--acc:#ffb45e;--hand:'Caveat',cursive;--sans:'Nunito',system-ui,sans-serif}
+*{box-sizing:border-box;min-width:0}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font:17px/1.6 var(--sans);background:radial-gradient(55% 40% at 88% -6%,rgba(255,170,90,.32),transparent 70%),radial-gradient(45% 35% at -4% 60%,rgba(255,110,170,.16),transparent 70%),var(--bg)}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 max(4vw,18px)}
+nav.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0}
+.logo{font:700 30px/1 var(--hand);text-decoration:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;border:1.5px solid var(--line);font:800 16px var(--sans);text-decoration:none;color:var(--ink);background:transparent;cursor:pointer}
+.btn.pri{border:0;background:linear-gradient(135deg,#ffc36e,#ff9a7a);color:#2a1420;box-shadow:0 10px 30px -10px rgba(255,160,90,.75)}
+.btn:focus-visible{outline:3px solid var(--acc);outline-offset:3px}
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(24px,5vw,64px);align-items:center;padding:clamp(28px,6vw,72px) 0 clamp(40px,7vw,90px)}
+h1{font:700 clamp(54px,8vw,92px)/.95 var(--hand);margin:0 0 18px;text-shadow:0 0 34px rgba(255,180,94,.35)}
+.lead{font-size:clamp(18px,2vw,21px);color:#ead8cb;margin:0 0 26px;max-width:34ch}
+.cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.note{color:var(--mute);font-size:14px;margin:14px 0 0}
+/* decorative open album */
+.album{position:relative;aspect-ratio:1.45;border-radius:14px;padding:3.2%;background:linear-gradient(160deg,#9a6a9c,#7b4b7f 55%,#5e3862);box-shadow:0 40px 70px -24px rgba(0,0,0,.7),0 0 90px rgba(255,170,90,.22);transform:rotate(-2deg)}
+.spread{height:100%;display:grid;grid-template-columns:1fr 1fr;border-radius:6px;overflow:hidden;background:#2e1f38}
+.pg{position:relative;background:radial-gradient(circle at 18% 16%,rgba(255,244,225,.8) 0 1px,transparent 2px),radial-gradient(circle at 70% 28%,rgba(255,244,225,.6) 0 1px,transparent 2px),radial-gradient(circle at 40% 80%,rgba(255,244,225,.6) 0 1px,transparent 2px),radial-gradient(80% 40% at 50% 104%,rgba(255,150,90,.28),transparent 70%),linear-gradient(180deg,#2e1f38,#22172b)}
+.pg+.pg{background:radial-gradient(70% 50% at 20% 10%,rgba(255,255,255,.5),transparent 70%),#f9c6dc;box-shadow:inset 14px 0 18px -14px rgba(0,0,0,.45)}
+.ph{position:absolute;background:#fff;padding:4% 4% 13%;box-shadow:0 8px 16px rgba(0,0,0,.35)}
+.ph i{display:block;width:100%;aspect-ratio:1;border-radius:1px}
+.ph b{position:absolute;left:0;right:0;bottom:2%;text-align:center;font:700 clamp(11px,1.6vw,17px)/1 var(--hand);color:#3a2a33}
+.p1{left:9%;top:10%;width:46%;transform:rotate(-5deg)}.p1 i{background:radial-gradient(60% 50% at 70% 30%,#ffd98a,transparent 70%),linear-gradient(160deg,#f2a65a,#c95b6b 60%,#7b4b7f)}
+.p2{left:44%;top:44%;width:42%;transform:rotate(6deg)}.p2 i{background:radial-gradient(50% 40% at 30% 70%,#b8f5d0,transparent 70%),linear-gradient(200deg,#9fe8ff,#6a4fb3)}
+.p3{left:14%;top:16%;width:50%;transform:rotate(3deg)}.p3 i{background:radial-gradient(50% 50% at 50% 40%,#fff3d6,transparent 70%),linear-gradient(180deg,#ffb3d9,#e86fa0)}
+.ttl{position:absolute;right:8%;bottom:9%;font:700 clamp(18px,3vw,34px)/1 var(--hand);color:#5b2340;transform:rotate(-4deg)}
+.stk{position:absolute;width:15%;aspect-ratio:1}
+.flower{left:4%;bottom:7%}.star{right:9%;top:8%}
+section{padding:clamp(40px,7vw,80px) 0;border-top:1px solid rgba(255,255,255,.06)}
+h2{font:700 clamp(38px,5vw,54px)/1.05 var(--hand);margin:0 0 10px}
+.sub{color:var(--mute);margin:0 0 30px;max-width:60ch}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:22px}
+.card h3{font:800 18px/1.3 var(--sans);margin:12px 0 6px}
+.card p{margin:0;color:var(--mute);font-size:15.5px}
+.ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:rgba(255,180,94,.12);color:var(--acc)}
+.ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.steps{counter-reset:s;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:22px;color:var(--mute)}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--acc);color:#2a1420;font-weight:800;margin-bottom:10px}
+.steps b{display:block;color:var(--ink);font-size:18px;margin-bottom:4px}
+.end{text-align:center}
+.end .cta{justify-content:center}
+footer{padding:28px 0 40px;color:var(--mute);font-size:14px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;border-top:1px solid rgba(255,255,255,.06)}
+@media(max-width:820px){.hero{grid-template-columns:1fr}.album{max-width:520px;margin:0 auto;width:100%}.grid,.steps{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top"><a class="logo" href="/">Гэр бүлийн цомог</a><a class="btn" href="/login?next=/home">Нэвтрэх</a></nav>
+
+  <header class="hero">
+    <div>
+      <h1>Дурсамжаа жинхэнэ цомог шиг хадгал</h1>
+      <p class="lead">Зургаа хуудсан дээр чөлөөтэй байрлуулж, стикер, бичгээр чимээд аав ээж, ажлынхантайгаа хуваалц. Зургууд тань өөрийн тань Google Drive-д эх чанараараа хадгалагдана.</p>
+      <div class="cta"><a class="btn pri" href="/login?next=/home">Үнэгүй эхлэх</a><a class="btn" href="#how">Хэрхэн ажилладаг вэ</a></div>
+      <p class="note">Имэйлээрээ нэвтэрнэ, нууц үг хэрэггүй.</p>
+    </div>
+    <div class="album" aria-hidden="true">
+      <div class="spread">
+        <div class="pg">
+          <div class="ph p1"><i></i><b>Зуны орой</b></div>
+          <svg class="stk flower" viewBox="0 0 100 100"><g fill="#ff7eb6"><circle cx="50" cy="28" r="18"/><circle cx="71" cy="43" r="18"/><circle cx="63" cy="68" r="18"/><circle cx="37" cy="68" r="18"/><circle cx="29" cy="43" r="18"/></g><circle cx="50" cy="50" r="13" fill="#ffd36e"/></svg>
+        </div>
+        <div class="pg">
+          <div class="ph p3"><i></i><b>Ээжтэйгээ</b></div>
+          <div class="ph p2"><i></i><b>2026</b></div>
+          <svg class="stk star" viewBox="0 0 100 100"><path d="M50 4c5 30 16 41 46 46-30 5-41 16-46 46-5-30-16-41-46-46 30-5 41-16 46-46z" fill="#ffd36e"/></svg>
+          <span class="ttl">Хамтдаа</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Юу хийж болох вэ</h2>
+    <p class="sub">Цаасан цомгийн дулаан мэдрэмжийг утас, компьютер дээр.</p>
+    <div class="grid">
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg></div><h3>Жинхэнэ цомог шиг</h3><p>Хуудас эргүүлдэг цомог, 4 өөр загвар, стикер, гар бичмэл, гэрэл зургийн хүрээ.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.8-3.4 3.2-5 6-5s5.2 1.6 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14c2.4.2 4.2 1.7 5 4.5"/></svg></div><h3>Гэр бүлдээ хуваалц</h3><p>Аав ээждээ нэг линк явуулахад тэд шууд орж, сэтгэгдэл бичиж, өөрсдөө зураг нэмнэ.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/></svg></div><h3>Зураг тань өөрт тань</h3><p>Зургууд таны Google Drive-д эх файлаараа хадгалагдана. Сайт таны бусад файлыг харахгүй.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 7l9 6 9-6"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg></div><h3>Хамт олонд дамжуулах</h3><p>Ажлынхандаа зургийг чанар алдагдуулахгүйгээр нэг дор илгээж, ZIP-ээр татуулна.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M7 14h10v7H7z"/></svg></div><h3>Хэвлэх</h3><p>Цомгоо PDF болгож хэвлэх, эсвэл зургуудаа постер карт болгох.</p></div>
+      <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><h3>Нууц цомог</h3><p>«Зөвхөн би» гэсэн цомгийг таниас өөр хэн ч харахгүй.</p></div>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>Гурван алхамаар</h2>
+    <p class="sub">Нэг удаа тохируулчихвал аав ээж тань ямар ч тохиргоо хийхгүй.</p>
+    <ol class="steps">
+      <li><b>Имэйлээрээ нэвтэр</b>Имэйл рүү чинь 6 оронтой код ирнэ.</li>
+      <li><b>Гэр бүлийн цомгоо үүсгэ</b>Google Drive-аа холбоход зургууд тэнд хадгалагдана.</li>
+      <li><b>Хайртай хүмүүсээ урь</b>Нэр, имэйлийг нь нэмээд гарсан линкийг Messenger-ээр явуул.</li>
+    </ol>
+  </section>
+
+  <section class="end">
+    <h2>Өнөөдөр эхэл</h2>
+    <p class="sub" style="margin-inline:auto">Үнэгүй. Зураг тань өөрийн тань Drive-д.</p>
+    <div class="cta"><a class="btn pri" href="/login?next=/home">Гэр бүлийн цомог үүсгэх</a></div>
+  </section>
+
+  <footer><span>Гэр бүлийн цомог</span><a href="/terms">Үйлчилгээний нөхцөл, нууцлал</a></footer>
+</div>
+</body>
+</html>
