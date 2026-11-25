@@ -3,7 +3,7 @@
 // бүртгэл Google Sheets-д (Apps Script-ээр) бичигдэнэ.
 
 const APPS = {
-  album: { read: ['family'], comment: ['family'], upload: [] },
+  album: { read: ['family'], comment: ['family'], upload: ['family'], add: ['family'] },
   share: { read: ['coworker'], comment: [], upload: ['coworker'] }
 };
 const PAGES = { 'album.html': 'text/html', 'share.html': 'text/html', 'login.html': 'text/html', 'admin.html': 'text/html', 'shim.js': 'text/javascript' };
@@ -122,7 +122,7 @@ async function who(env, email) {
 }
 const can = (me, app, what) => me.owner || (APPS[app][what] || []).some(r => me.roles.includes(r));
 function meInfo(me) {
-  const c = app => ({ read: can(me, app, 'read'), comment: can(me, app, 'comment'), upload: can(me, app, 'upload'), edit: me.owner });
+  const c = app => ({ read: can(me, app, 'read'), comment: can(me, app, 'comment'), upload: can(me, app, 'upload'), add: can(me, app, 'add'), edit: me.owner });
   return { email: me.email, name: me.name, uid: me.uid, owner: me.owner, roles: me.roles, can: { album: c('album'), share: c('share') } };
 }
 async function session(req, env) {
@@ -204,8 +204,9 @@ function okPath(path) { const s = String(path || '').split('/'); return s.length
 function rule(me, app, path, op, old) {
   const s = path.split('/');
   if (!can(me, app, 'read')) return false;
-  if (s[0] === 'data' && s[1] === 'users') return s[2] === me.uid && (op === 'read' || me.owner);
+  if (s[0] === 'data' && s[1] === 'users') return s[2] === me.uid && (op === 'read' || me.owner || can(me, app, 'add'));
   if (op === 'read' || me.owner) return true;
+  if (app === 'album' && s[0] === 'albums' && can(me, 'album', 'add')) return true;
   if (app === 'album' && s[0] === 'comments' && s.length === 2 && can(me, 'album', 'comment')) return op === 'set' && !old ? true : !!old && old.by === me.uid;
   if (app === 'share' && s[0] === 'batches' && s.length === 2 && can(me, 'share', 'upload')) return op === 'set' && !old ? true : !!old && old.by === me.uid;
   return false;
@@ -218,6 +219,29 @@ const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
 function merge(a, b) { const o = { ...a }; for (const [k, v] of Object.entries(b)) o[k] = isObj(v) && isObj(o[k]) ? merge(o[k], v) : v; return o; }
 const bump = (env, app, parent) => env.DB.prepare('INSERT INTO cols (app, parent, ver) VALUES (?, ?, 1) ON CONFLICT(app, parent) DO UPDATE SET ver = ver + 1').bind(app, parent);
 
+async function albumGuard(env, me, s, op, old, data) {
+  const mine = x => !!x && x.by === me.uid;
+  if (s.length === 2) {
+    if (op === 'delete') return mine(old);
+    if (!old || mine(old)) return { ...data, by: me.uid, byName: (old && old.byName) || me.name };
+    if (!old.collab) return null;
+    const o = { ...old };
+    for (const k of ['np', 'nph', 'cover']) if (k in data) o[k] = data[k];
+    return o;
+  }
+  if (s.length === 4 && s[2] === 'pages') {
+    const alb = await getDoc(env, 'album', 'albums/' + s[1]);
+    if (!alb) return null;
+    if (mine(alb.data)) return op === 'delete' ? true : data;
+    if (!alb.data.collab) return null;
+    const its = x => Array.isArray(x && x.items) ? x.items.filter(isObj) : [];
+    if (op === 'delete') return !!old && mine(old) && its(old).every(mine);
+    if (!old) return { n: Number(data.n) || 0, bg: String(data.bg || ''), items: its(data).filter(mine), by: me.uid };
+    const others = its(old).filter(i => !mine(i)), ids = new Set(others.map(i => i.id));
+    return { ...old, items: [...others, ...its(data).filter(i => mine(i) && !ids.has(i.id))] };
+  }
+  return null;
+}
 async function dbApi(req, env, ctx, me, url) {
   const b = await req.json().catch(() => null);
   if (!b) return fail('invalid_argument');
@@ -241,6 +265,8 @@ async function dbApi(req, env, ctx, me, url) {
   if (!['set', 'update', 'delete'].includes(b.op)) return fail('invalid_argument');
   const old = await getDoc(env, app, path);
   if (!rule(me, app, path, b.op === 'delete' ? 'delete' : 'set', old && old.data)) return fail('invalid_argument');
+  const guarded = app === 'album' && !me.owner && path.startsWith('albums/');
+  if (guarded && b.op === 'delete' && !(await albumGuard(env, me, path.split('/'), 'delete', old && old.data))) return fail('invalid_argument');
   if (b.op === 'delete') {
     if (old) await env.DB.batch([env.DB.prepare('DELETE FROM docs WHERE app = ? AND path = ?').bind(app, path), bump(env, app, parentOf(path))]);
     return json({ ok: true });
@@ -248,6 +274,7 @@ async function dbApi(req, env, ctx, me, url) {
   let data = b.data;
   if (!isObj(data)) return fail('invalid_argument');
   if (b.op === 'update') { if (!old) return fail('invalid_argument'); data = merge(old.data, data); }
+  if (guarded) { data = await albumGuard(env, me, path.split('/'), b.op, old && old.data, data); if (!data) return fail('invalid_argument'); }
   const s = path.split('/');
   if (app === 'album' && s[0] === 'comments') {
     const text = String(data.text || '').trim().slice(0, 1000);

@@ -77,6 +77,10 @@ h1[contenteditable]:not([contenteditable=false]):is(:hover,:focus){box-shadow:0 
 .book.new:hover{border-color:var(--acc);color:var(--ink)}
 .book.new svg{width:34px;height:34px;margin:0 auto 6px}
 .bmeta{color:var(--mute);font-size:14px;margin:0}
+.bmeta b{color:var(--ink);font-weight:700}
+.bco{display:inline-flex;vertical-align:-3px}.bco svg{width:16px;height:16px}
+.ck{display:flex;gap:10px;align-items:flex-start;margin:12px 0 0;padding:12px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer}.ck input{margin-top:3px;width:18px;height:18px;accent-color:var(--acc)}.ck small{display:block;color:var(--mute)}
+.ck.off{opacity:.45;pointer-events:none}
 .empty{text-align:center;padding:30px 0 60px;color:var(--mute)}
 .empty .e1{font:700 34px/1.1 var(--hand);color:var(--ink);margin:0 0 6px}
 
@@ -401,6 +405,7 @@ body.traying .toast{bottom:auto;top:76px}
       <label><input type="radio" name="priv" value="0"><span><b>Гэр бүл харна</b><small>Таны зөвшөөрсөн имэйлтэй хүмүүс харна</small></span></label>
       <label><input type="radio" name="priv" value="1"><span><b>Зөвхөн би</b><small>Өөр хэн ч харахгүй</small></span></label>
     </div>
+    <label class="ck" id="fCollabL"><input type="checkbox" id="fCollab"><span><b>Гэр бүлийнхэн зураг нэмж болно</b><small>Тэд энэ цомогт зураг, стикер, бичиг нэмнэ. Бусдын нэмснийг өөрчилж, устгаж чадахгүй.</small></span></label>
     <div class="fl">Хавтасны хэлбэр</div>
     <div class="pv">
       <label><input type="radio" name="bind" value="book"><span><b>Хавтастай ном</b><small>Зузаан даавуун хавтас</small></span></label>
@@ -587,10 +592,14 @@ const cellW = ar => Math.round(Math.min(.43, .37 / ar) * 1000) / 1000;
 const ERR = { too_large: 'Зураг хэт том байна.', unsupported_type: 'Энэ төрлийн файлыг хадгалах боломжгүй, JPG эсвэл PNG зураг оруулна уу.', quota_or_state: 'Хадгалах зай дүүрсэн байна.', quota_exceeded: 'Хадгалах зай дүүрсэн байна.', rate_limited: 'Хэт олон удаа илгээлээ, хэсэг хүлээгээд дахин оролдоорой.' };
 
 const el = {};
-for (const id of ['tabWall','vWall','wStatus','wShuf','wall','mPrint','lbZoomIn','lbZoomOut','lbHint','prPages','prCards','prCancel','top','title','sub','tabShelf','tabTl','vShelf','shStatus','shelf','vTl','tlStatus','tlYears','tlBody','vAlb','aTitle','aBadge','aPrint','aSet','aEdit','aStatus','desk','cover','spread','aEmpty','aEmptyMsg','pprev','pnext','pcount','tray','ttabs','tbody','file','lb','lbCount','lbClose','lbTrack','lbPrev','lbNext','lbCap','lbMeta','lbGo','lbCmt','lbDl','mAlb','fAlb','fAlbH','fTitle','fTheme','fColors','fStk','fDel','fCancel','confirm','cH','cD','cNo','cYes','busy','busyT','busyB','veil','toast']) el[id] = $(id);
+for (const id of ['tabWall','vWall','wStatus','wShuf','wall','mPrint','lbZoomIn','lbZoomOut','lbHint','prPages','prCards','prCancel','top','title','sub','tabShelf','tabTl','vShelf','shStatus','shelf','vTl','tlStatus','tlYears','tlBody','vAlb','aTitle','aBadge','aPrint','aSet','aEdit','aStatus','desk','cover','spread','aEmpty','aEmptyMsg','pprev','pnext','pcount','tray','ttabs','tbody','file','lb','lbCount','lbClose','lbTrack','lbPrev','lbNext','lbCap','lbMeta','lbGo','lbCmt','lbDl','mAlb','fAlb','fAlbH','fTitle','fTheme','fCollab','fCollabL','fColors','fStk','fDel','fCancel','confirm','cH','cD','cNo','cYes','busy','busyT','busyB','veil','toast']) el[id] = $(id);
 for (const n of document.querySelectorAll('[data-i]')) n.insertAdjacentHTML('afterbegin', I(n.dataset.i));
 
-let db = null, assets = null, dl = null, cm = null, user = null, canEdit = false, uid = '';
+let db = null, assets = null, dl = null, cm = null, user = null, canEdit = false, canAdd = false, uid = '', myName = '';
+const fullOf = a => !!a && (canEdit || (canAdd && !!uid && a.by === uid));
+const contribOf = a => fullOf(a) || (!!a && canAdd && !a.priv && a.collab);
+const mineIt = it => fullOf(album) || (!!uid && it.by === uid);
+const byMe = () => uid ? { by: uid } : {};
 let siteTitle = '', shared = [], priv = [], sharedOk = false, privOk = false;
 let view = 'shelf', wantAlb = '', justMade = '', album = null, pages = [], pagesOk = false, unsubPages = null;
 let pg = 0, editMode = false, selId = null, activePage = 0, tab = 'photo', wantPage = null;
@@ -622,12 +631,14 @@ const pagesCol = a => albumDoc(a).collection('pages');
 const allAlbums = () => [...shared, ...priv];
 function cleanAlb(id, d, isPriv) {
   if (!okId(id)) return null; d = d || {};
-  return { id, priv: isPriv, bind: d.bind === 'spiral' ? 'spiral' : 'book', title: String(d.title || 'Нэргүй цомог').slice(0, 60), color: ALLCOV.includes(d.color) ? d.color : COV[0], theme: has(THEMES, d.theme) ? d.theme : 'classic', sticker: has(ST, d.sticker) ? d.sticker : 'heart', created: +d.created || 0, np: Math.max(0, d.np | 0), nph: Math.max(0, d.nph | 0), cover: okAsset(d.cover) ? d.cover : '' };
+  const by = typeof d.by === 'string' && /^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(d.by) ? d.by : '';
+  return { id, by, byName: String(d.byName || '').slice(0, 40), collab: !!d.collab, priv: isPriv, bind: d.bind === 'spiral' ? 'spiral' : 'book', title: String(d.title || 'Нэргүй цомог').slice(0, 60), color: ALLCOV.includes(d.color) ? d.color : COV[0], theme: has(THEMES, d.theme) ? d.theme : 'classic', sticker: has(ST, d.sticker) ? d.sticker : 'heart', created: +d.created || 0, np: Math.max(0, d.np | 0), nph: Math.max(0, d.nph | 0), cover: okAsset(d.cover) ? d.cover : '' };
 }
-const albData = a => Object.assign({ bind: a.bind || 'book', title: a.title, color: a.color, theme: a.theme || 'dusk', sticker: a.sticker, created: a.created, np: a.np, nph: a.nph, cover: a.cover }, a.priv ? { kind: 'album' } : {});
+const albData = a => Object.assign(a.by ? { by: a.by, byName: a.byName || '' } : {}, { collab: !!a.collab && !a.priv, bind: a.bind || 'book', title: a.title, color: a.color, theme: a.theme || 'dusk', sticker: a.sticker, created: a.created, np: a.np, nph: a.nph, cover: a.cover }, a.priv ? { kind: 'album' } : {});
 function cleanItem(i) {
   if (!i || typeof i !== 'object') return null;
   const it = { id: String(i.id || '').replace(/[^a-z0-9]/gi, '').slice(0, 24) || rid(), t: i.t, x: num(i.x, .5, -.2, 1.2), y: num(i.y, .7, -.2, PH + .2), w: num(i.w, .4, .005, 1.3), r: num(i.r, 0, -180, 180), z: Math.round(num(i.z, 1, 0, 9999)) };
+  if (typeof i.by === 'string' && /^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(i.by)) it.by = i.by;
   if (i.t === 'p') { if (!okAsset(i.asset)) return null; if (has(FX, i.fx)) it.fx = i.fx; Object.assign(it, { asset: i.asset, ar: num(i.ar, .75, .2, 5), type: String(i.type || '').slice(0, 40), taken: isDate(i.taken) ? i.taken : '', cap: String(i.cap || '').slice(0, 200), fr: has(FR, i.fr) ? i.fr : 'w' }); if (+i.cr > 0) it.cr = num(i.cr, 1, .2, 5); }
   else if (i.t === 's') it.s = has(ST, i.s) ? i.s : 'heart';
   else if (i.t === 'n') { it.text = String(i.text || '').slice(0, 500); it.st = has(NT, i.st) ? i.st : 'yellow'; }
@@ -671,16 +682,16 @@ function onLists() {
 }
 
 /* ---------- shelf ---------- */
-const bookHTML = a => `<div class="bk"><a class="book" href="#a-${a.id}" style="--cv:${a.color}" data-th="${a.theme}" aria-label="${esc(a.title)}"><span class="plate">${esc(a.title)}</span>${a.cover ? `<span class="win"><img src="/_blob/${esc(a.cover)}" alt="" loading="lazy"></span>` : ''}<span class="bst">${stSvg(a.sticker)}</span>${a.priv ? `<span class="lock">${I('lock')}Зөвхөн би</span>` : ''}</a><p class="bmeta">${a.np} хуудас · ${a.nph} зураг</p></div>`;
+const bookHTML = a => `<div class="bk"><a class="book" href="#a-${a.id}" style="--cv:${a.color}" data-th="${a.theme}" aria-label="${esc(a.title)}"><span class="plate">${esc(a.title)}</span>${a.cover ? `<span class="win"><img src="/_blob/${esc(a.cover)}" alt="" loading="lazy"></span>` : ''}<span class="bst">${stSvg(a.sticker)}</span>${a.priv ? `<span class="lock">${I('lock')}Зөвхөн би</span>` : ''}</a><p class="bmeta">${a.by && a.by !== uid && a.byName ? `<b>${esc(a.byName)}</b> · ` : ''}${a.np} хуудас · ${a.nph} зураг${a.collab ? ` · <span class="bco" title="Гэр бүлийнхэн зураг нэмж болно">${I('users')}</span>` : ''}</p></div>`;
 const newHTML = p => `<div class="bk"><button class="book new" data-new="${p}">${I('plus')}Шинэ цомог</button></div>`;
 function renderShelf() {
   if (!db) return;
   const by = (x, y) => y.created - x.created;
   const sh = shared.slice().sort(by), pr = priv.slice().sort(by);
   let h = '';
-  if (canEdit) {
+  if (canEdit || canAdd) {
     h += `<section class="sect"><h2>Гэр бүлд хуваалцсан</h2><p class="sd">Таны зөвшөөрсөн имэйлтэй хүмүүс эдгээрийг харна.</p><div class="shelf">${sh.map(bookHTML).join('')}${newHTML(0)}</div></section>`;
-    if (uid) h += `<section class="sect"><h2>Зөвхөн надад</h2><p class="sd">Эдгээрийг таниас өөр хэн ч харахгүй.</p><div class="shelf">${pr.map(bookHTML).join('')}${newHTML(1)}</div></section>`;
+    if (uid) h += `<section class="sect"><h2>${canEdit ? 'Зөвхөн надад' : 'Миний цомог'}</h2><p class="sd">Эдгээрийг таниас өөр хэн ч харахгүй.</p><div class="shelf">${pr.map(bookHTML).join('')}${newHTML(1)}</div></section>`;
   } else if (sh.length) {
     h = `<section class="sect"><div class="shelf">${sh.map(bookHTML).join('')}</div></section>`;
   } else if (sharedOk) {
@@ -709,10 +720,13 @@ function openAlbForm(a, privDef) {
   const p = a ? a.priv : !!privDef;
   for (const r of el.fAlb.querySelectorAll('input[name=priv]')) { r.checked = r.value === (p ? '1' : '0'); r.disabled = !uid && r.value === '1'; }
   for (const r of el.fAlb.querySelectorAll('input[name=bind]')) r.checked = r.value === (a ? a.bind : 'book');
+  el.fCollab.checked = a ? !!a.collab : canEdit; syncCollab();
   el.fDel.hidden = !a;
   drawForm(); el.mAlb.hidden = false; el.fTitle.focus();
 }
 const closeForm = () => { el.mAlb.hidden = true; formAlb = null; };
+function syncCollab() { const pv = (el.fAlb.querySelector('input[name=priv]:checked') || {}).value === '1'; el.fCollabL.classList.toggle('off', pv); el.fCollab.disabled = pv; }
+el.fAlb.addEventListener('change', e => { if (e.target.name === 'priv') syncCollab(); });
 el.fTheme.addEventListener('click', e => { const b = e.target.closest('[data-thp]'); if (!b) return; fTheme = b.dataset.thp; if (!THEMES[fTheme].cov.includes(fColor)) fColor = THEMES[fTheme].cov[0]; if (!formAlb) fSticker = THEMES[fTheme].cs; drawForm(); });
 el.fColors.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) { fColor = b.dataset.c; drawForm(); } });
 el.fStk.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) { fSticker = b.dataset.k; drawForm(); } });
@@ -720,14 +734,14 @@ el.fCancel.addEventListener('click', closeForm);
 el.mAlb.addEventListener('click', e => { if (e.target === el.mAlb) closeForm(); });
 el.fAlb.addEventListener('submit', async e => {
   e.preventDefault();
-  if (!db || !canEdit) return;
+  if (!db || !(canEdit || canAdd) || (formAlb && !fullOf(formAlb))) return;
   const title = el.fTitle.value.replace(/\s+/g, ' ').trim().slice(0, 60) || 'Нэргүй цомог';
   const toPriv = (el.fAlb.querySelector('input[name=priv]:checked') || {}).value === '1' && !!uid;
   const bind = (el.fAlb.querySelector('input[name=bind]:checked') || {}).value === 'spiral' ? 'spiral' : 'book';
-  const a = formAlb, theme = fTheme; closeForm();
+  const a = formAlb, theme = fTheme, collab = el.fCollab.checked && !toPriv; closeForm();
   try {
     if (!a) {
-      const n = { id: rid(), priv: toPriv, bind, title, color: fColor, sticker: fSticker, theme, created: Date.now(), np: 1, nph: 0, cover: '' };
+      const n = { id: rid(), by: uid, byName: myName, collab, priv: toPriv, bind, title, color: fColor, sticker: fSticker, theme, created: Date.now(), np: 1, nph: 0, cover: '' };
       justMade = n.id;
       await retry(() => albumDoc(n).set(albData(n)));
       await retry(() => pagesCol(n).doc(rid()).set({ n: 1, bg: THEMES[theme].bg, items: [] }));
@@ -735,12 +749,12 @@ el.fAlb.addEventListener('submit', async e => {
     } else if (a.priv !== toPriv) {
       busyShow('Цомгийг зөөж байна…', .3);
       if (album && album.id === a.id) leaveAlbum();
-      await moveAlbum(a, toPriv, { title, bind, color: fColor, sticker: fSticker, theme });
+      await moveAlbum(a, toPriv, { title, bind, color: fColor, sticker: fSticker, theme, collab });
       if (a.theme !== theme) await retheme(Object.assign({}, a, { priv: toPriv }), a.theme, theme);
       busyHide(); syncAlbum(a.id);
       toast(toPriv ? 'Одоо зөвхөн та харна' : 'Одоо гэр бүл тань харна');
     } else {
-      await retry(() => albumDoc(a).update({ title, bind, color: fColor, sticker: fSticker, theme }));
+      await retry(() => albumDoc(a).update({ title, bind, color: fColor, sticker: fSticker, theme, collab }));
       if (a.theme !== theme) { busyShow('Загвар солиж байна…', .5); await retheme(a, a.theme, theme); busyHide(); toast(`«${THEMES[theme].name}» загвар боллоо`); }
     }
   } catch (err) { busyHide(); toast('Хадгалж чадсангүй'); }
@@ -827,15 +841,15 @@ function subscribePages(a) {
 function renderAlbumBar() {
   if (!album) return;
   el.aTitle.textContent = album.title;
-  el.aBadge.innerHTML = canEdit ? (album.priv ? `${I('lock')}Зөвхөн би харна` : `${I('users')}Гэр бүл харна`) : '';
-  el.aPrint.hidden = !dl; el.aSet.hidden = !canEdit; el.aEdit.hidden = !canEdit;
+  el.aBadge.innerHTML = fullOf(album) ? (album.priv ? `${I('lock')}Зөвхөн би харна` : `${I('users')}Гэр бүл харна`) : contribOf(album) ? `${I('plus')}Та зураг нэмж болно` : (album.byName && album.by !== uid ? `${I('users')}${esc(album.byName)}-ийн цомог` : '');
+  el.aPrint.hidden = !dl; el.aSet.hidden = !fullOf(album); el.aEdit.hidden = !contribOf(album);
   el.aEdit.innerHTML = editMode ? `${I('check')}Болсон` : `${I('pen')}Засах`;
 }
 function renderAlbum() {
   if (!album) return;
   el.vAlb.classList.toggle('edit', editMode);
   el.aEmpty.hidden = !(pagesOk && !pages.length);
-  el.aEmptyMsg.textContent = canEdit ? '«Засах» товчийг дараад «Хуудас» хэсгээс хуудас нэмээрэй.' : 'Удахгүй хуудас нэмэгдэнэ.';
+  el.aEmptyMsg.textContent = contribOf(album) ? '«Засах» товчийг дараад «Хуудас» хэсгээс хуудас нэмээрэй.' : 'Удахгүй хуудас нэмэгдэнэ.';
   renderBook();
 }
 const cmtOn = () => !!cm && !!album && !album.priv && !editMode;
@@ -884,7 +898,7 @@ el.pnext.addEventListener('click', () => nav(1));
 
 /* saving */
 function savePage(p, delay) {
-  if (!canEdit || !album) return;
+  if (!contribOf(album)) return;
   clearTimeout(p.timer); p.timer = null;
   if (delay) { p.timer = setTimeout(() => { p.timer = null; flush(p); }, delay); return; }
   flush(p);
@@ -903,7 +917,7 @@ let cntT = 0;
 function syncCounts() {
   clearTimeout(cntT); const a = album;
   cntT = setTimeout(() => {
-    if (!a || !album || album.id !== a.id || !canEdit) return;
+    if (!a || !album || album.id !== a.id || !contribOf(album)) return;
     const ph = pages.flatMap(p => p.items.filter(i => i.t === 'p'));
     const np = pages.length, nph = ph.length, cover = ph[0] ? ph[0].asset : '';
     if (np !== album.np || nph !== album.nph || cover !== album.cover) albumDoc(album).update({ np, nph, cover }).catch(() => {});
@@ -918,7 +932,7 @@ function newPage(after) {
 function addItem(page, props, focus) {
   if (!page) { page = newPage(pages.length - 1); activePage = pages.indexOf(page); showPage(activePage); }
   const z = page.items.reduce((m, i) => Math.max(m, i.z), 0) + 1;
-  const it = cleanItem(Object.assign({ id: rid(), x: .5 + (Math.random() - .5) * .2, y: PH / 2 + (Math.random() - .5) * .3, r: Math.round((Math.random() - .5) * 10), z }, props));
+  const it = cleanItem(Object.assign({ id: rid(), x: .5 + (Math.random() - .5) * .2, y: PH / 2 + (Math.random() - .5) * .3, r: Math.round((Math.random() - .5) * 10), z }, byMe(), props));
   if (!it) return;
   page.items.push(it); selId = it.id; savePage(page); renderBook(); renderTray();
   if (focus) { const ta = $('sText'); if (ta) { ta.focus(); ta.select(); } }
@@ -941,6 +955,7 @@ el.spread.addEventListener('pointerdown', e => {
   const itEl = e.target.closest('.it');
   if (!itEl) { if (selId) { selId = null; applySel(); renderTray(); } return; }
   const it = page.items.find(x => x.id === itEl.dataset.id); if (!it) return;
+  if (!mineIt(it)) { if (selId) { selId = null; applySel(); renderTray(); } toast('Бусдын нэмсэн зүйлийг зөвхөн тэр хүн өөрөө өөрчилнө'); return; }
   const act = (e.target.closest('[data-act]') || {}).dataset;
   if (act && act.act === 'del') { e.preventDefault(); removeItem(page, it); return; }
   e.preventDefault();
@@ -994,7 +1009,7 @@ function endStroke(ok) {
   const bw = Math.max(maxx - minx, .01), bh = Math.max(maxy - miny, .005);
   const str = pts.map(q => `${Math.round((q[0] - minx) / bw * 1000)},${Math.round((q[1] - miny) / bw * 1000)}`).join(' ');
   const z = s.page.items.reduce((m, i) => Math.max(m, i.z), 0) + 1;
-  const it = cleanItem({ id: rid(), t: 'd', pts: str, ar: bh / bw, col: pen.c, sw: Math.round(pen.w / bw * 10000) / 10, x: minx + bw / 2, y: miny + bh / 2, w: bw, r: 0, z });
+  const it = cleanItem({ ...byMe(), id: rid(), t: 'd', pts: str, ar: bh / bw, col: pen.c, sw: Math.round(pen.w / bw * 10000) / 10, x: minx + bw / 2, y: miny + bh / 2, w: bw, r: 0, z });
   if (!it) return;
   s.page.items.push(it); savePage(s.page);
   const pageEl = el.spread.querySelector(`.page[data-p="${pages.indexOf(s.page)}"]`);
@@ -1046,6 +1061,7 @@ function tabHTML(t) {
   if (t === 'sticker') { const ks = Object.keys(ST), b = k => `<button data-st="${k}" class="${ST[k][4] ? 'ink' : ''}" aria-label="${ST[k][0]}" title="${ST[k][0]}">${stSvg(k)}</button>`; const T = thm(); return `<div class="stsec">${T.sth}</div><div class="stgrid">${T.st.map(b).join('')}</div><div class="stsec" style="margin-top:14px">Цагаан үзгээр зурсан мэт · хуудасны өнгөнд тохирно</div><div class="stgrid">${ks.filter(k => ST[k][4]).map(b).join('')}</div><div class="stsec" style="margin-top:14px">Бусад стикер</div><div class="stgrid">${ks.filter(k => !ST[k][4] && !T.st.includes(k)).map(b).join('')}</div>`; }
   if (t === 'pen') return `<div class="fl" style="margin-top:0">Үзэгний өнгө</div><div class="sw">${PEN.map(([c, l]) => `<button data-pc="${c}" style="--c:${c === 'ink' ? 'linear-gradient(135deg,#fff 50%,#1d1d20 50%)' : c}" aria-pressed="${pen.c === c}" aria-label="${l}" title="${l}"></button>`).join('')}</div><div class="fl">Зузаан</div><div class="seg">${PENW.map(([w, l]) => `<button class="chip" data-pw="${w}" aria-pressed="${pen.w === w}">${l}</button>`).join('')}<button class="btn sm" data-pg="undo">${I('back')}Сүүлийн зураасыг арилгах</button></div><p class="hint">Тасархай хүрээтэй хуудсан дээр хуруу эсвэл хулганаараа чөлөөтэй зураарай. Зурсан зүйлээ зөөх, устгах бол өөр хэсэг рүү шилжээд дээр нь дарна.</p>`;
   if (t === 'note') return `<div class="ntgrid">${Object.entries(NT).map(([k, v]) => `<button data-nt="${k}"><span class="nt ${k}">${v}</span></button>`).join('')}</div><div class="fl">Бэлэн үгс</div><div class="seg">${LABELS.map(l => `<button class="chip" data-lbl="${esc(l)}">${esc(l)}</button>`).join('')}</div>`;
+  if (!fullOf(album)) return `<div class="fl" style="margin-top:0">Хуудас</div><div class="seg"><button class="chip" data-pg="add">${I('plus')}Шинэ хуудас нэмэх</button><button class="chip" data-pg="undo">Сүүлийн зураасаа арилгах</button></div><p class="hint">Хуудасны өнгө, дарааллыг цомгийн эзэн өөрчилнө. Та зураг, стикер, бичиг нэмж, өөрийн нэмснийг зөөж засна.</p>`;
   return `<div class="fl">${page ? `${activePage + 1}-р хуудасны өнгө` : 'Хуудас алга'}</div><div class="sw">${page ? [...thm().pages, ...Object.keys(BG).filter(k => !thm().pages.includes(k))].map(k => [k, BG[k]]).map(([k, v]) => `<button data-bg="${k}" class="bgsw bg-${k}" aria-pressed="${page.bg === k}" aria-label="${v[0]}" title="${v[0]}"></button>`).join('') : ''}</div><div class="seg" style="margin-top:14px"><button class="btn sm" data-pg="add">${I('plus')}Хуудас нэмэх</button>${page ? `<button class="btn sm" data-pg="tidy">${I('grid')}Цэгцлэх</button><button class="btn sm" data-pg="collage">${I('grid')}Коллаж болгох</button><button class="btn sm" data-pg="left">${I('back')}Өмнө нь зөөх</button><button class="btn sm" data-pg="right">Хойш нь зөөх${I('next')}</button><button class="btn sm danger" data-pg="del">${I('trash')}Хуудас устгах</button>` : ''}</div>`;
 }
 function selHTML(it) {
@@ -1082,7 +1098,7 @@ el.tray.addEventListener('click', e => {
   if (d.st) { addItem(page, { t: 's', s: d.st, w: ST[d.st][2] < .5 ? .42 : .22 }); return; }
   if (d.nt) { addItem(page, { t: 'n', st: d.nt, text: d.nt === 'title' ? 'Гарчиг' : 'Энд бичээрэй', w: d.nt === 'title' ? .7 : d.nt === 'plain' || d.nt === 'quote' ? .46 : .38 }, true); return; }
   if (d.lbl) { addItem(page, { t: 'n', st: 'tag', text: d.lbl, w: .42 }); return; }
-  if (d.bg && page) { page.bg = has(BG, d.bg) ? d.bg : 'dusk'; savePage(page); renderBook(); renderTray(); return; }
+  if (d.bg && page && fullOf(album)) { page.bg = has(BG, d.bg) ? d.bg : 'dusk'; savePage(page); renderBook(); renderTray(); return; }
   if (d.pg) { pageOp(d.pg); return; }
   if (d.s) selOp(d.s, d.v);
 });
@@ -1105,6 +1121,7 @@ async function pageOp(op) {
   const i = activePage, p = pages[i];
   if (op === 'add') { newPage(p ? i : pages.length - 1); activePage = p ? i + 1 : pages.length - 1; showPage(activePage); renderAlbum(); renderTray(); syncCounts(); return; }
   if (!p) return;
+  if (op !== 'undo' && !fullOf(album)) return;
   if (op === 'tidy') {
     const ph = p.items.filter(x => x.t === 'p').sort((a, b) => (a.y - b.y) || (a.x - b.x));
     ph.slice(0, PER).forEach((it, k) => { it.x = CELLS[k][0]; it.y = CELLS[k][1]; it.w = cellW(it.ar); it.r = Math.round((Math.random() - .5) * 20) / 10; delete it.cr; if (it.fr === 'n') it.fr = 'w'; });
@@ -1119,7 +1136,7 @@ async function pageOp(op) {
     savePage(p); renderBook(); toast(ph.length > 12 ? 'Эхний 12 зургийг коллаж болголоо' : 'Коллаж боллоо'); return;
   }
   if (op === 'undo') {
-    let k = -1; p.items.forEach((x, j) => { if (x.t === 'd') k = j; });
+    let k = -1; p.items.forEach((x, j) => { if (x.t === 'd' && mineIt(x)) k = j; });
     if (k < 0) { toast('Арилгах зураас алга'); return; }
     p.items.splice(k, 1); savePage(p); renderBook(); return;
   }
@@ -1178,7 +1195,7 @@ async function addPhotos(files) {
       if (cnt >= PER) { page = newPage(pages.indexOf(page)); cnt = 0; }
       const [x, y] = CELLS[cnt], z = page.items.reduce((m, i) => Math.max(m, i.z), 0) + 1;
       const ar = w && h ? h / w : .75;
-      const it = cleanItem({ id: rid(), t: 'p', asset: r.id, type: r.contentType || type, ar, taken: ymd(f.lastModified), cap: '', fr: 'w', fx: thm().fx, x, y, w: cellW(ar), r: Math.round((Math.random() - .5) * 30) / 10, z });
+      const it = cleanItem({ ...byMe(), id: rid(), t: 'p', asset: r.id, type: r.contentType || type, ar, taken: ymd(f.lastModified), cap: '', fr: 'w', fx: thm().fx, x, y, w: cellW(ar), r: Math.round((Math.random() - .5) * 30) / 10, z });
       if (it) { page.items.push(it); savePage(page); ok++; }
       activePage = pages.indexOf(page); showPage(activePage);
       if (!drag) renderBook();
@@ -1663,6 +1680,8 @@ addEventListener('resize', () => { const v = perView(); if (v !== lastPV) { last
   [db, user] = await Promise.all([C.use('db'), C.use('user')]);
   if (!db) { el.shStatus.textContent = 'Энэ цомгийг харах эрх танд алга байна.'; return; }
   try { canEdit = !!(user && await user.canEdit()); } catch (e) { canEdit = false; }
+  try { canAdd = canEdit || !!(user && typeof user.canAdd === 'function' && await user.canAdd()); } catch (e) { canAdd = canEdit; }
+  try { myName = String(((user && await user.me()) || {}).name || '').slice(0, 40); } catch (e) { myName = ''; }
   try { uid = (user && await user.id()) || ''; } catch (e) { uid = ''; }
   if (uid && !/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(uid)) uid = '';
   [assets, dl, cm] = await Promise.all([C.use('assets'), C.use('downloads'), C.use('comments')]);
@@ -1677,7 +1696,7 @@ addEventListener('resize', () => { const v = perView(); if (v !== lastPV) { last
     if (!s.metadata.fromCache) { sharedOk = true; clearTimeout(t0); el.shStatus.textContent = ''; }
     onLists();
   }, () => { sharedOk = true; clearTimeout(t0); el.shStatus.textContent = 'Цомгуудыг ачаалж чадсангүй. Дахин нээж үзээрэй.'; onLists(); });
-  if (canEdit && uid) {
+  if ((canEdit || canAdd) && uid) {
     try {
       db.collection('data/users/' + uid).onSnapshot(s => {
         priv = s.docs.filter(d => (d.data() || {}).kind === 'album').map(d => cleanAlb(d.id, d.data(), true)).filter(Boolean);

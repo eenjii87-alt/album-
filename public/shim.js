@@ -239,6 +239,7 @@ body.traying .mechip{display:none}`;
     if (name === 'user') return Object.freeze({
       async isOwner() { return me.owner; },
       async canEdit() { return !!c.edit; },
+      async canAdd() { return !!c.add; },
       async can(n) { return n === 'data.write' ? !!c.edit : n === 'assets.write' ? !!c.upload : null; },
       async id() { return me.uid; },
       async me() { return { id: me.uid, name: me.name }; },
