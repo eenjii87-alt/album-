@@ -108,7 +108,7 @@ h1[contenteditable]:not([contenteditable=false]):is(:hover,:focus){box-shadow:0 
 body.traying .spread{--chrome:470px}
 .pbar{display:flex;align-items:center;justify-content:center;gap:14px;padding:22px 0 26px;color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums;text-shadow:0 1px 6px rgba(0,0,0,.4)}
 .pbar .ic{background:rgba(255,240,225,.14);color:var(--ink)}.pbar .ic:hover{background:rgba(255,240,225,.26)}
-.page{position:relative;aspect-ratio:210/297;container-type:inline-size;overflow:hidden;--pi:#f3ede2;user-select:none;-webkit-user-select:none}
+.page{position:relative;isolation:isolate;aspect-ratio:210/297;container-type:inline-size;overflow:hidden;--pi:#f3ede2;user-select:none;-webkit-user-select:none}
 .page::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:9990}
 .page:first-child:not(:last-child)::before{background:linear-gradient(90deg,transparent 86%,rgba(0,0,0,.18) 95%,rgba(0,0,0,.5)),linear-gradient(90deg,rgba(255,255,255,.05),transparent 8%)}
 .page:last-child:not(:first-child)::before{background:linear-gradient(270deg,transparent 86%,rgba(0,0,0,.18) 95%,rgba(0,0,0,.5)),linear-gradient(270deg,rgba(255,255,255,.05),transparent 8%)}
@@ -268,7 +268,13 @@ body[data-th=classic] .pbar{color:#3b2a17;text-shadow:none}body[data-th=classic]
 .track{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
 .track::-webkit-scrollbar{display:none}
 .slide{flex:0 0 100%;position:relative;scroll-snap-align:center;scroll-snap-stop:always}
-.slide img{position:absolute;top:8px;left:4vw;width:calc(100% - 8vw);height:calc(100% - 16px);object-fit:contain}
+.slide img{position:absolute;top:8px;left:4vw;width:calc(100% - 8vw);height:calc(100% - 16px);object-fit:contain;cursor:zoom-in;transform-origin:50% 50%;will-change:transform;-webkit-user-drag:none;user-select:none}
+.vz{display:flex;gap:8px;align-items:center}.vz .ic:disabled{opacity:.35;cursor:default}
+.viewer.zoomed .track{overflow-x:hidden;scroll-snap-type:none}
+.viewer.zoomed .slide img{cursor:grab}.viewer.zoomed.panning .slide img{cursor:grabbing}
+.viewer.zoomed .nav{display:none}
+.zhint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;font:600 13px var(--sans);padding:6px 12px;border-radius:999px;pointer-events:none;opacity:0;transition:opacity .3s}
+.zhint.on{opacity:1}
 .nav{position:absolute;top:50%;transform:translateY(-50%)}.prev{left:12px}.next{right:12px}
 @media(hover:none){.nav{display:none}}
 .vinfo{width:min(760px,100%);margin:0 auto;padding:10px 16px calc(16px + env(safe-area-inset-bottom));text-align:center}
@@ -366,11 +372,12 @@ body.traying .toast{bottom:auto;top:76px}
 <input id="file" type="file" accept="image/*,.heic,.heif" multiple hidden>
 
 <div id="lb" class="viewer" hidden role="dialog" aria-modal="true" aria-label="Зураг үзэх">
-  <div class="vtop"><span id="lbCount" class="vcount"></span><button id="lbClose" class="ic" aria-label="Хаах" data-i="x"></button></div>
+  <div class="vtop"><span id="lbCount" class="vcount"></span><div class="vz"><button id="lbZoomOut" class="ic" aria-label="Жижигрүүлэх" title="Жижигрүүлэх (−)" data-i="zout"></button><button id="lbZoomIn" class="ic" aria-label="Томруулах" title="Томруулах (+)" data-i="zin"></button><button id="lbClose" class="ic" aria-label="Хаах" data-i="x"></button></div></div>
   <div class="stage">
     <div id="lbTrack" class="track"></div>
     <button id="lbPrev" class="ic nav prev" aria-label="Өмнөх зураг" data-i="back"></button>
     <button id="lbNext" class="ic nav next" aria-label="Дараах зураг" data-i="next"></button>
+    <div id="lbHint" class="zhint" aria-hidden="true"></div>
   </div>
   <div class="vinfo">
     <p id="lbCap" class="vcap"></p><p id="lbMeta" class="vmeta"></p>
@@ -445,7 +452,7 @@ const PH = 297 / 210;
 const DEF_TITLE = 'Манай гэр бүлийн цомог';
 
 const ICONS = {
-  x: 'M6 6l12 12M18 6L6 18', plus: 'M12 5v14M5 12h14', back: 'M15 5l-7 7 7 7', next: 'M9 5l7 7-7 7',
+  x: 'M6 6l12 12M18 6L6 18', plus: 'M12 5v14M5 12h14', zin: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20M10.5 7.5v6M7.5 10.5h6"/>', zout: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20M7.5 10.5h6"/>', back: 'M15 5l-7 7 7 7', next: 'M9 5l7 7-7 7',
   rot: '<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>', cmt: '<path d="M4 5h16v11H10l-6 4z"/>',
   dl: 'M12 4v11m-5-5l5 5 5-5M5 20h14', trash: 'M4 7h16M9 7V4h6v3m-8 0l1 13h8l1-13',
   lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
@@ -580,7 +587,7 @@ const cellW = ar => Math.round(Math.min(.43, .37 / ar) * 1000) / 1000;
 const ERR = { too_large: 'Зураг хэт том байна.', unsupported_type: 'Энэ төрлийн файлыг хадгалах боломжгүй, JPG эсвэл PNG зураг оруулна уу.', quota_or_state: 'Хадгалах зай дүүрсэн байна.', quota_exceeded: 'Хадгалах зай дүүрсэн байна.', rate_limited: 'Хэт олон удаа илгээлээ, хэсэг хүлээгээд дахин оролдоорой.' };
 
 const el = {};
-for (const id of ['tabWall','vWall','wStatus','wShuf','wall','mPrint','prPages','prCards','prCancel','top','title','sub','tabShelf','tabTl','vShelf','shStatus','shelf','vTl','tlStatus','tlYears','tlBody','vAlb','aTitle','aBadge','aPrint','aSet','aEdit','aStatus','desk','cover','spread','aEmpty','aEmptyMsg','pprev','pnext','pcount','tray','ttabs','tbody','file','lb','lbCount','lbClose','lbTrack','lbPrev','lbNext','lbCap','lbMeta','lbGo','lbCmt','lbDl','mAlb','fAlb','fAlbH','fTitle','fTheme','fColors','fStk','fDel','fCancel','confirm','cH','cD','cNo','cYes','busy','busyT','busyB','veil','toast']) el[id] = $(id);
+for (const id of ['tabWall','vWall','wStatus','wShuf','wall','mPrint','lbZoomIn','lbZoomOut','lbHint','prPages','prCards','prCancel','top','title','sub','tabShelf','tabTl','vShelf','shStatus','shelf','vTl','tlStatus','tlYears','tlBody','vAlb','aTitle','aBadge','aPrint','aSet','aEdit','aStatus','desk','cover','spread','aEmpty','aEmptyMsg','pprev','pnext','pcount','tray','ttabs','tbody','file','lb','lbCount','lbClose','lbTrack','lbPrev','lbNext','lbCap','lbMeta','lbGo','lbCmt','lbDl','mAlb','fAlb','fAlbH','fTitle','fTheme','fColors','fStk','fDel','fCancel','confirm','cH','cD','cNo','cYes','busy','busyT','busyB','veil','toast']) el[id] = $(id);
 for (const n of document.querySelectorAll('[data-i]')) n.insertAdjacentHTML('afterbegin', I(n.dataset.i));
 
 let db = null, assets = null, dl = null, cm = null, user = null, canEdit = false, uid = '';
@@ -1199,10 +1206,11 @@ function openLb(list, i, ctx) {
   lb.list = list; lb.cur = i; lb.ctx = ctx; lb.ids = ''; lb.open = true; lb.focus = document.activeElement;
   el.lb.hidden = false; document.body.style.overflow = 'hidden';
   drawLb(); el.lbClose.focus();
+  zHint(matchMedia('(hover:none)').matches ? 'Хоёр хуруугаараа тэлж эсвэл хоёр товшиж томруулна' : 'Хулганы дугуй эсвэл хоёр товшилтоор томруулна');
 }
 function closeLb() {
   if (!lb.open) return;
-  lb.open = false; el.lb.hidden = true; document.body.style.overflow = ''; el.lbTrack.innerHTML = ''; lb.ids = '';
+  zReset(); lb.open = false; el.lb.hidden = true; document.body.style.overflow = ''; el.lbTrack.innerHTML = ''; lb.ids = '';
   if (lb.focus && document.contains(lb.focus)) lb.focus.focus();
 }
 function refreshLb(list) {
@@ -1216,7 +1224,8 @@ function drawLb() {
   const ids = lb.list.map(e => e.it.id).join(',');
   if (ids !== lb.ids) {
     lb.ids = ids;
-    el.lbTrack.innerHTML = lb.list.map((e, j) => `<div class="slide"><img src="/_blob/${esc(e.it.asset)}" alt="${esc(e.it.cap || 'Зураг')}" loading="${Math.abs(j - lb.cur) < 2 ? 'eager' : 'lazy'}" decoding="async"></div>`).join('');
+    el.lbTrack.innerHTML = lb.list.map((e, j) => `<div class="slide"><img src="/_blob/${esc(e.it.asset)}" alt="${esc(e.it.cap || 'Зураг')}" loading="${Math.abs(j - lb.cur) < 2 ? 'eager' : 'lazy'}" decoding="async" draggable="false"></div>`).join('');
+    zReset();
     const snap = () => { el.lbTrack.scrollLeft = lb.cur * el.lbTrack.clientWidth; };
     snap(); requestAnimationFrame(snap);
   }
@@ -1224,6 +1233,7 @@ function drawLb() {
 }
 function lbInfo() {
   const e = lb.list[lb.cur]; if (!e) return;
+  if (zm.id !== e.it.id) { zReset(); zm.id = e.it.id; }
   el.lbCount.textContent = `${lb.cur + 1} / ${lb.list.length}`;
   el.lbPrev.disabled = lb.cur <= 0; el.lbNext.disabled = lb.cur >= lb.list.length - 1;
   el.lbCap.textContent = e.it.cap;
@@ -1237,6 +1247,89 @@ el.lbTrack.addEventListener('scroll', () => {
   cancelAnimationFrame(lbRaf);
   lbRaf = requestAnimationFrame(() => { const w = el.lbTrack.clientWidth; if (!w) return; const i = clamp(Math.round(el.lbTrack.scrollLeft / w), 0, lb.list.length - 1); if (i !== lb.cur) { lb.cur = i; lbInfo(); } });
 }, { passive: true });
+/* ---------- lightbox zoom ---------- */
+const ZMAX = 5, zm = { s: 1, x: 0, y: 0, img: null, id: null };
+let zHintT = 0;
+function zHint(t) { el.lbHint.textContent = t; el.lbHint.classList.add('on'); clearTimeout(zHintT); zHintT = setTimeout(() => el.lbHint.classList.remove('on'), 2600); }
+function zCur() { const sl = el.lbTrack.children[lb.cur]; return sl ? sl.querySelector('img') : null; }
+function zBtns() { el.lbZoomOut.disabled = zm.s <= 1.001; el.lbZoomIn.disabled = zm.s >= ZMAX - .001; el.lb.classList.toggle('zoomed', zm.s > 1.001); }
+function zApply(anim) {
+  const im = zm.img; if (!im) return;
+  im.style.transition = anim && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 'transform .22s ease' : 'none';
+  im.style.transform = zm.s > 1.001 ? `translate(${zm.x}px,${zm.y}px) scale(${zm.s})` : '';
+  zBtns();
+}
+function zReset() {
+  if (zm.img) { zm.img.style.transition = 'none'; zm.img.style.transform = ''; }
+  zm.s = 1; zm.x = 0; zm.y = 0; zm.img = null; zm.id = null; zBtns();
+}
+function zClamp() {
+  const im = zm.img; if (!im) return;
+  const bw = im.offsetWidth, bh = im.offsetHeight, ar = (im.naturalWidth || 1) / (im.naturalHeight || 1);
+  const cw = Math.min(bw, bh * ar), ch = Math.min(bh, bw / ar);
+  const mx = Math.max(0, (cw * zm.s - bw) / 2), my = Math.max(0, (ch * zm.s - bh) / 2);
+  zm.x = clamp(zm.x, -mx, mx); zm.y = clamp(zm.y, -my, my);
+}
+function zOrigin() { const im = zm.img, r = im.getBoundingClientRect(); return [r.left + r.width / 2 - zm.x, r.top + r.height / 2 - zm.y]; }
+function zTo(s, cx, cy, anim, from) {
+  if (!zm.img) zm.img = zCur();
+  if (!zm.img) return;
+  const f = from || { s: zm.s, x: zm.x, y: zm.y, cx, cy };
+  s = clamp(s, 1, ZMAX);
+  const [ox, oy] = from ? from.o : zOrigin(), k = s / f.s;
+  zm.x = (cx - ox) - k * (f.cx - ox - f.x); zm.y = (cy - oy) - k * (f.cy - oy - f.y); zm.s = s;
+  if (s <= 1.001) { zm.s = 1; zm.x = 0; zm.y = 0; }
+  zClamp(); zApply(anim);
+}
+function zCenter() { const r = el.lbTrack.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }
+el.lbZoomIn.addEventListener('click', () => { const [cx, cy] = zCenter(); zTo(zm.s * 1.6, cx, cy, true); });
+el.lbZoomOut.addEventListener('click', () => { const [cx, cy] = zCenter(); zTo(zm.s / 1.6, cx, cy, true); });
+el.lbTrack.addEventListener('wheel', e => {
+  if (!lb.open || (!e.ctrlKey && Math.abs(e.deltaX) > Math.abs(e.deltaY))) return;
+  e.preventDefault(); zTo(zm.s * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0022)), e.clientX, e.clientY);
+}, { passive: false });
+el.lbTrack.addEventListener('dblclick', e => { if (e.target.tagName === 'IMG') zTo(zm.s > 1.001 ? 1 : 2.5, e.clientX, e.clientY, true); });
+let zDrag = null;
+el.lbTrack.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'mouse' || e.button !== 0 || zm.s <= 1.001) return;
+  zDrag = { sx: e.clientX, sy: e.clientY, x: zm.x, y: zm.y }; el.lb.classList.add('panning'); e.preventDefault();
+});
+addEventListener('pointermove', e => { if (!zDrag) return; zm.x = zDrag.x + e.clientX - zDrag.sx; zm.y = zDrag.y + e.clientY - zDrag.sy; zClamp(); zApply(); });
+addEventListener('pointerup', () => { if (zDrag) { zDrag = null; el.lb.classList.remove('panning'); } });
+let zT = null, zTap = { t: 0, x: 0, y: 0 };
+const tDist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+el.lbTrack.addEventListener('touchstart', e => {
+  if (!lb.open) return;
+  if (!zm.img) zm.img = zCur();
+  if (!zm.img) return;
+  const ts = e.touches;
+  if (ts.length === 2) {
+    const cx = (ts[0].clientX + ts[1].clientX) / 2, cy = (ts[0].clientY + ts[1].clientY) / 2;
+    zT = { pinch: true, d: tDist(ts[0], ts[1]), f: { s: zm.s, x: zm.x, y: zm.y, cx, cy, o: zOrigin() } };
+    e.preventDefault();
+  } else if (ts.length === 1) {
+    zT = zm.s > 1.001 ? { pinch: false, sx: ts[0].clientX, sy: ts[0].clientY, x: zm.x, y: zm.y, moved: false } : { tap: true, sx: ts[0].clientX, sy: ts[0].clientY, moved: false };
+    if (zm.s > 1.001) e.preventDefault();
+  }
+}, { passive: false });
+el.lbTrack.addEventListener('touchmove', e => {
+  if (!zT) return;
+  const ts = e.touches;
+  if (zT.pinch && ts.length === 2) {
+    const cx = (ts[0].clientX + ts[1].clientX) / 2, cy = (ts[0].clientY + ts[1].clientY) / 2;
+    zTo(zT.f.s * tDist(ts[0], ts[1]) / zT.d, cx, cy, false, zT.f); e.preventDefault();
+  } else if (!zT.pinch && !zT.tap && ts.length === 1) {
+    zm.x = zT.x + ts[0].clientX - zT.sx; zm.y = zT.y + ts[0].clientY - zT.sy; zT.moved = true; zClamp(); zApply(); e.preventDefault();
+  } else if (zT.tap && ts.length === 1 && Math.hypot(ts[0].clientX - zT.sx, ts[0].clientY - zT.sy) > 12) zT.moved = true;
+}, { passive: false });
+el.lbTrack.addEventListener('touchend', e => {
+  if (!zT) return;
+  const was = zT; if (e.touches.length === 0) zT = null; else if (was.pinch && e.touches.length === 1) { zT = { pinch: false, sx: e.touches[0].clientX, sy: e.touches[0].clientY, x: zm.x, y: zm.y, moved: true }; return; }
+  if (was.pinch || was.moved || e.touches.length) return;
+  const now = Date.now(), t = e.changedTouches[0];
+  if (now - zTap.t < 320 && Math.hypot(t.clientX - zTap.x, t.clientY - zTap.y) < 40) { zTo(zm.s > 1.001 ? 1 : 2.5, t.clientX, t.clientY, true); zTap.t = 0; e.preventDefault(); }
+  else zTap = { t: now, x: t.clientX, y: t.clientY };
+});
 const lbGo = d => { const i = lb.cur + d; if (i < 0 || i >= lb.list.length) return; el.lbTrack.scrollTo({ left: i * el.lbTrack.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
 el.lbPrev.addEventListener('click', () => lbGo(-1));
 el.lbNext.addEventListener('click', () => lbGo(1));
@@ -1543,7 +1636,11 @@ document.addEventListener('keydown', e => {
   if (!el.mAlb.hidden) { if (e.key === 'Escape') closeForm(); return; }
   if (!el.mPrint.hidden) { if (e.key === 'Escape') el.mPrint.hidden = true; return; }
   if (lb.open) {
-    if (e.key === 'Escape') closeLb();
+    if (e.key === 'Escape') { if (zm.s > 1.001) { const [cx, cy] = zCenter(); zTo(1, cx, cy, true); } else closeLb(); }
+    else if (e.key === '+' || e.key === '=') { const [cx, cy] = zCenter(); zTo(zm.s * 1.6, cx, cy, true); }
+    else if (e.key === '-' || e.key === '_') { const [cx, cy] = zCenter(); zTo(zm.s / 1.6, cx, cy, true); }
+    else if (e.key === '0') { const [cx, cy] = zCenter(); zTo(1, cx, cy, true); }
+    else if (zm.s > 1.001 && e.key.startsWith('Arrow')) { e.preventDefault(); const d = 60; zm.x += e.key === 'ArrowLeft' ? d : e.key === 'ArrowRight' ? -d : 0; zm.y += e.key === 'ArrowUp' ? d : e.key === 'ArrowDown' ? -d : 0; zClamp(); zApply(true); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); lbGo(-1); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); lbGo(1); }
     return;
