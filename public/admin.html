@@ -20,6 +20,10 @@ nav{display:flex;gap:8px;flex-wrap:wrap}
 .btn.pri{background:linear-gradient(135deg,#ffc36e,#ff9a7a);border-color:transparent;color:#2a1420}
 .btn.danger{color:#ffb2a6}
 .btn:disabled{opacity:.5;cursor:default}
+.linkbox{margin-top:14px;border:1.5px solid var(--acc);border-radius:14px;padding:14px;background:rgba(255,180,94,.06)}
+.linkbox p{margin:0 0 8px}
+.lrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.ubtn{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 :is(.chip,.btn,input,select,textarea,summary):focus-visible{outline:3px solid var(--acc);outline-offset:2px}
 section{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:clamp(16px,3vw,24px);margin-bottom:18px}
 h2{font:800 20px/1.2 'Nunito',system-ui,sans-serif;margin:0 0 4px}
@@ -60,7 +64,7 @@ pre{background:#0f0f12;border:1px solid var(--line);border-radius:12px;padding:1
 
   <section>
     <h2>Хэн нэвтэрч болох вэ</h2>
-    <p class="sub">Энд нэмсэн имэйл рүү нэвтрэх код очно. «Гэр бүл» цомгийг харж сэтгэгдэл бичнэ, «Хамт олон» зураг дамжуулах хуудсанд орж файл илгээж, татна.</p>
+    <p class="sub">Хүн нэмээд <b>«Линк»</b> товчийг дарвал тухайн хүний нэвтрэх линк гарна. Түүнийг Messenger, Viber-ээр явуулахад тэр хүн нэг товшоод орно. Gmail холбосон бол имэйлээрээ код авч бас нэвтэрнэ. «Гэр бүл» цомгийг харж сэтгэгдэл бичнэ, «Хамт олон» зураг дамжуулах хуудсанд орж файл илгээж, татна.</p>
     <table>
       <thead><tr><th>Нэр</th><th>Имэйл</th><th class="c">Гэр бүл</th><th class="c">Хамт олон</th><th></th></tr></thead>
       <tbody id="users"></tbody>
@@ -73,6 +77,12 @@ pre{background:#0f0f12;border:1px solid var(--line);border-radius:12px;padding:1
       <button class="btn pri" type="submit">Нэмэх</button>
     </form>
     <p id="uMsg" class="msg"></p>
+    <div id="linkBox" class="linkbox" hidden>
+      <p id="linkFor"></p>
+      <input id="linkUrl" class="fld" readonly aria-label="Нэвтрэх линк">
+      <div class="lrow"><button class="btn pri" id="linkCopy" type="button">Хуулах</button><button class="btn" id="linkShare" type="button" hidden>Явуулах</button><button class="btn" id="linkClose" type="button">Хаах</button></div>
+      <p class="sub" style="margin:8px 0 0">Линк 14 хоног хүчинтэй, тухайн хүн олон төхөөрөмжөөсөө ашиглаж болно. Шинэ линк гаргавал хуучин нь хүчингүй болно. Хэнд ч бүү дамжуулаарай гэж хэлээрэй.</p>
+    </div>
   </section>
 
   <section>
@@ -170,8 +180,8 @@ async function call(path, body) {
 function gsCode() { return $('gsSrc').textContent.replace("'ЭНД_ТҮЛХҮҮРЭЭ_ТАВЬ'", `'${state ? state.script.token : ''}'`).trim(); }
 function render() {
   const s = state;
-  $('users').innerHTML = `<tr><td><input class="fld" id="ownerName" maxlength="40" value="${esc(s.owner.name)}" aria-label="Таны нэр"></td><td class="em">${esc(s.owner.email)}</td><td class="c" colspan="2">Эзэн · бүх эрхтэй</td><td></td></tr>` +
-    s.users.map(u => { const r = String(u.roles).split(','); return `<tr data-email="${esc(u.email)}"><td><input class="fld" data-name value="${esc(u.name)}" maxlength="40" aria-label="Нэр"></td><td class="em">${esc(u.email)}</td><td class="c"><input type="checkbox" data-role="family" ${r.includes('family') ? 'checked' : ''} aria-label="Гэр бүл"></td><td class="c"><input type="checkbox" data-role="coworker" ${r.includes('coworker') ? 'checked' : ''} aria-label="Хамт олон"></td><td class="c"><button class="btn danger" data-del>Хасах</button></td></tr>`; }).join('');
+  $('users').innerHTML = `<tr><td><input class="fld" id="ownerName" maxlength="40" value="${esc(s.owner.name)}" aria-label="Таны нэр"></td><td class="em">${esc(s.owner.email)}</td><td class="c" colspan="2">Эзэн · бүх эрхтэй</td><td class="c"><button class="btn" data-link="${esc(s.owner.email)}" data-who="${esc(s.owner.name)}" title="Өөр утас, компьютер дээрээ нэвтрэх линк">Линк</button></td></tr>` +
+    s.users.map(u => { const r = String(u.roles).split(','); return `<tr data-email="${esc(u.email)}"><td><input class="fld" data-name value="${esc(u.name)}" maxlength="40" aria-label="Нэр"></td><td class="em">${esc(u.email)}</td><td class="c"><input type="checkbox" data-role="family" ${r.includes('family') ? 'checked' : ''} aria-label="Гэр бүл"></td><td class="c"><input type="checkbox" data-role="coworker" ${r.includes('coworker') ? 'checked' : ''} aria-label="Хамт олон"></td><td class="c"><div class="ubtn"><button class="btn" data-link="${esc(u.email)}" data-who="${esc(u.name)}">Линк</button><button class="btn danger" data-del>Хасах</button></div></td></tr>`; }).join('');
   const ok = !!s.script.url;
   $('scriptPill').className = 'pill ' + (ok ? 'ok' : 'no'); $('scriptPill').textContent = ok ? 'Холбогдсон' : 'Холбогдоогүй';
   $('token').textContent = s.script.token; $('gs').textContent = gsCode();
@@ -190,7 +200,17 @@ $('users').addEventListener('change', async e => {
   const j = await call('user', { email: tr.dataset.email, name: tr.querySelector('[data-name]').value, roles });
   $('uMsg').className = 'msg ' + (j.error ? 'err' : 'ok'); $('uMsg').textContent = j.error ? (ERR[j.error] || 'Хадгалж чадсангүй') : 'Хадгаллаа';
 });
+async function showLink(email, name) {
+  const j = await call('invite', { email });
+  if (!j.ok) { toast('Линк гаргаж чадсангүй'); return; }
+  $('linkFor').innerHTML = `<b>${esc(name || email)}</b>-ийн нэвтрэх линк:`; $('linkUrl').value = j.url; $('linkBox').hidden = false;
+  $('linkShare').hidden = !navigator.share; $('linkBox').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); $('linkUrl').select();
+}
+$('linkCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('linkUrl').value); toast('Линкийг хууллаа'); } catch (e) { $('linkUrl').select(); toast('Линкийг тэмдэглээд хуулна уу'); } });
+$('linkShare').addEventListener('click', () => navigator.share({ title: 'Гэр бүлийн цомог', text: 'Гэр бүлийн цомогт нэвтрэх линк:', url: $('linkUrl').value }).catch(() => {}));
+$('linkClose').addEventListener('click', () => { $('linkBox').hidden = true; $('linkUrl').value = ''; });
 $('users').addEventListener('click', async e => {
+  const lk = e.target.closest('[data-link]'); if (lk) { showLink(lk.dataset.link, lk.dataset.who); return; }
   const b = e.target.closest('[data-del]'); if (!b) return;
   const tr = b.closest('tr');
   if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Итгэлтэй юу?'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Хасах'; }, 3000); return; }
@@ -201,8 +221,8 @@ $('addF').addEventListener('submit', async e => {
   const roles = [$('nFam').checked && 'family', $('nCow').checked && 'coworker'].filter(Boolean);
   const j = await call('user', { email: $('nEmail').value, name: $('nName').value, roles });
   $('uMsg').className = 'msg ' + (j.error ? 'err' : 'ok');
-  $('uMsg').textContent = j.error ? (ERR[j.error] || 'Нэмж чадсангүй') : 'Нэмлээ. Одоо тэр хүн имэйлээрээ нэвтэрч болно.';
-  if (!j.error) { $('nEmail').value = ''; $('nName').value = ''; load(); }
+  $('uMsg').textContent = j.error ? (ERR[j.error] || 'Нэмж чадсангүй') : 'Нэмлээ. Доорх линкийг тэр хүнд явуулаарай.';
+  if (!j.error) { const em = $('nEmail').value.trim().toLowerCase(), nm = $('nName').value.trim(); $('nEmail').value = ''; $('nName').value = ''; await load(); showLink(em, nm); }
 });
 const showTest = j => {
   $('sMsg').className = 'msg ' + (j.ok ? 'ok' : 'err');

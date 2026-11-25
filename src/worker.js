@@ -32,6 +32,8 @@ export default {
       if (p === '/login') return page(env, ctx, 'login.html');
       if (p === '/shim.js') return page(env, ctx, 'shim.js');
       if (p === '/login/setup') return setupLogin(env, url);
+      if (p === '/login/link') return linkPage(url);
+      if (p === '/api/login/link') return linkLogin(req, env);
       if (p === '/api/login/start' || p === '/api/login/verify') return loginApi(req, env, url, p);
 
       const me = await session(req, env);
@@ -149,6 +151,20 @@ async function setupLogin(env, url) {
   if (!t || !want || (await sha(t)) !== want || !ownerEmail(env)) return redirect('/login?setup=bad');
   await setCfg(env, 'setup_hash', null);
   return redirect('/admin', { 'set-cookie': await startSession(env, ownerEmail(env)) });
+}
+const LINK_HTML = `<!doctype html><html lang="mn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Гэр бүлийн цомог</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;box-sizing:border-box;font:17px/1.5 system-ui,-apple-system,sans-serif;color:#fbeee0;background:radial-gradient(80% 50% at 50% 112%,rgba(255,166,92,.75),rgba(255,120,150,.25) 45%,transparent 75%),linear-gradient(180deg,#22152a,#3b2341 50%,#6b3954 82%,#b5635a)}main{width:min(400px,100%);background:#2a1d30;border-radius:18px;padding:30px 24px;text-align:center;box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}h1{font-size:28px;margin:0 0 8px}p{color:#c4a9b8;margin:0 0 20px}button{width:100%;min-height:54px;border:0;border-radius:999px;background:linear-gradient(135deg,#ffc36e,#ff9a7a);color:#2a1420;font:800 18px system-ui,-apple-system,sans-serif;cursor:pointer}button:disabled{opacity:.6}#m{min-height:24px;margin:14px 0 0;color:#ffb2a6;font-weight:700}</style></head><body><main><h1>Гэр бүлийн цомог</h1><p>Танд цомог үзэх урилга ирлээ. Доорх товчийг дарж нэвтэрнэ үү.</p><button id="b">Нэвтрэх</button><p id="m"></p></main><script>const b=document.getElementById('b'),m=document.getElementById('m');b.onclick=async()=>{b.disabled=true;m.textContent='';try{const r=await fetch('/api/login/link',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({t:'__T__'})});if(r.ok){location.replace('/');return}m.textContent='Линкийн хугацаа дууссан эсвэл хүчингүй байна. Цомгийн эзнээс шинэ линк аваарай.'}catch(e){m.textContent='Холбогдож чадсангүй. Дахин оролдоорой.'}b.disabled=false}</script></body></html>`;
+function linkPage(url) {
+  const t = (url.searchParams.get('t') || '').replace(/[^a-f0-9]/g, '').slice(0, 64);
+  return new Response(LINK_HTML.replace('__T__', t), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...SEC } });
+}
+async function linkLogin(req, env) {
+  if (req.method !== 'POST') return fail('method', 405);
+  const b = await req.json().catch(() => ({}));
+  const t = String(b.t || '');
+  if (!/^[a-f0-9]{40}$/.test(t)) return fail('expired');
+  const row = await env.DB.prepare('SELECT email, expires FROM invites WHERE hash = ?').bind(await sha('inv:' + t)).first();
+  if (!row || row.expires < Date.now() || !(await who(env, row.email))) return fail('expired');
+  return json({ ok: true }, 200, { 'set-cookie': await startSession(env, row.email) });
 }
 async function loginApi(req, env, url, p) {
   if (req.method !== 'POST') return fail('method', 405);
@@ -383,8 +399,15 @@ async function adminApi(req, env, url, what, me) {
   }
   if (what === 'user-delete') {
     const email = String(b.email || '').trim().toLowerCase();
-    await env.DB.batch([env.DB.prepare('DELETE FROM users WHERE email = ?').bind(email), env.DB.prepare('DELETE FROM sessions WHERE email = ?').bind(email), env.DB.prepare('DELETE FROM codes WHERE email = ?').bind(email)]);
+    await env.DB.batch([env.DB.prepare('DELETE FROM users WHERE email = ?').bind(email), env.DB.prepare('DELETE FROM sessions WHERE email = ?').bind(email), env.DB.prepare('DELETE FROM codes WHERE email = ?').bind(email), env.DB.prepare('DELETE FROM invites WHERE email = ?').bind(email)]);
     return json({ ok: true });
+  }
+  if (what === 'invite') {
+    const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+    if (!(await who(env, email))) return fail('no_user');
+    const t = rnd(20);
+    await env.DB.prepare('INSERT INTO invites (email, hash, expires) VALUES (?, ?, ?) ON CONFLICT(email) DO UPDATE SET hash = excluded.hash, expires = excluded.expires').bind(email, await sha('inv:' + t), Date.now() + 14 * DAY).run();
+    return json({ ok: true, url: `${url.origin}/login/link?t=${t}`, days: 14 });
   }
   if (what === 'owner-name') { await setCfg(env, 'owner_name', String(b.name || '').trim().slice(0, 40) || null); return json({ ok: true }); }
   if (what === 'script') {
