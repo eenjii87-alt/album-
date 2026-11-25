@@ -391,7 +391,7 @@ body.traying .toast{bottom:auto;top:76px}
     <div class="fl">Хавтасны стикер</div><div id="fStk" class="stgrid sm"></div>
     <div class="fl">Хэн харах вэ?</div>
     <div class="pv">
-      <label><input type="radio" name="priv" value="0"><span><b>Гэр бүл харна</b><small>Линктэй хүмүүс харна</small></span></label>
+      <label><input type="radio" name="priv" value="0"><span><b>Гэр бүл харна</b><small>Таны зөвшөөрсөн имэйлтэй хүмүүс харна</small></span></label>
       <label><input type="radio" name="priv" value="1"><span><b>Зөвхөн би</b><small>Өөр хэн ч харахгүй</small></span></label>
     </div>
     <div class="fl">Хавтасны хэлбэр</div>
@@ -672,7 +672,7 @@ function renderShelf() {
   const sh = shared.slice().sort(by), pr = priv.slice().sort(by);
   let h = '';
   if (canEdit) {
-    h += `<section class="sect"><h2>Гэр бүлд хуваалцсан</h2><p class="sd">Линк өгсөн хүмүүс эдгээрийг харна.</p><div class="shelf">${sh.map(bookHTML).join('')}${newHTML(0)}</div></section>`;
+    h += `<section class="sect"><h2>Гэр бүлд хуваалцсан</h2><p class="sd">Таны зөвшөөрсөн имэйлтэй хүмүүс эдгээрийг харна.</p><div class="shelf">${sh.map(bookHTML).join('')}${newHTML(0)}</div></section>`;
     if (uid) h += `<section class="sect"><h2>Зөвхөн надад</h2><p class="sd">Эдгээрийг таниас өөр хэн ч харахгүй.</p><div class="shelf">${pr.map(bookHTML).join('')}${newHTML(1)}</div></section>`;
   } else if (sh.length) {
     h = `<section class="sect"><div class="shelf">${sh.map(bookHTML).join('')}</div></section>`;
